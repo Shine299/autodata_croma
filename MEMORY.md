@@ -6,8 +6,8 @@
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `joaquin_sprint1`
-**Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (Sprint 1 completo — todos los roles)
+**Sprint actual:** Sprint 1 — "Los datos entran" → ✅ **COMPLETADO Y VERIFICADO (Puerta 1 en verde)**
+**Última actualización:** 2026-08-14 (Sprint 1 completo y verificado — 65/65 tests verdes)
 
 ---
 
@@ -49,7 +49,15 @@
 
 ### Pendiente
 
-Sprint 1 completo. No hay tareas pendientes.
+Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
+
+### Verificación de cierre (Puerta 1) — 2026-08-14
+
+- ✅ **Suite completa: 65/65 tests en verde** en modo mock (sin gastar cuota).
+- ✅ `app.main` importa; landing `/`, `/api/v1/health` y `/api/v1/quota` responden **200**.
+- 🔧 **Entorno:** el `.venv` estaba incompleto → se corrió `pip install -r requirements.txt`. Sin ese install `app.main` no importa (falta `fastapi`) y 4 módulos de test no colectan (falta `sqlalchemy`). Usar siempre `.\.venv\Scripts\python.exe`.
+- 🔧 **Fix aplicado en `app/api/quota.py`:** ahora degrada con gracia (try/except → 200 con `database: error: ...`) igual que `/health`, en vez de propagar stacktrace cuando la DB no responde. README actualizado con nota de install + sección "Verificar que arranca".
+- ⚠️ **DB:** el `.env` apunta a una Supabase cuyo `DATABASE_URL` no resuelve DNS localmente; los tests usan el fallback SQLite en memoria de `app/core/database.py`. Validar la conexión real a Supabase en un entorno con red antes de la demo.
 
 ### Observaciones del review
 
