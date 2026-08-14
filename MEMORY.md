@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `sprint1-arroz`
+**Rama activa:** `joaquin_sprint1`
 **Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P3 cerró A-04, D-01, D-03)
+**Última actualización:** 2026-08-14 (Sprint 1 completo — todos los roles)
 
 ---
 
@@ -35,20 +35,21 @@
 | B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
 | C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
 | — | Tests automatizados de persistencia, integración y APIs | P4 | `tests/test_persistence.py`, `tests/test_croma_client_integration.py`, `tests/test_api_endpoints.py`, `pytest.ini` |
+| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | `app/integrations/croma/sources/sbs.py`. Rama `carlos_p2_sprint1` |
+| B-07 | Adapter APESEG SOAT + merge con SBS | P2 | `sources/apeseg.py` — `merge_insurance_sources()` |
+| B-08 | Adapter SUTRAN → schema `Infractions` | P2 | `sources/sutran.py` — clasificación de severidad con fallback |
+| B-09 | Adapter Callao papeletas → merge en `Infractions` | P2 | `sources/callao.py` — `merge_infractions()` |
+| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | `sources/sat_debt.py` |
+| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | `sources/sat_captures.py` |
+| C-02 | Validación/normalización de placa | P2 | `app/services/plate.py` — 4 formatos peruanos, 20 tests en `tests/test_plate.py` |
+| — | Fixtures SAT y Callao | P2 | `fixtures/callao_sample.json`, `sat_lima_sample.json`, `sat_capturas_sample.json` |
+| — | Tests de adapters | P2 | `tests/test_adapters_insurance.py`, `test_adapters_infractions.py`, `test_adapters_sat.py` (16 tests) |
+| A-07 | Prompts base del producto | P5 | `app/core/prompts.py` — 4 prompts: identidad, extracción, veredicto, negociación |
+| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/landing.html`, `app/web/routes.py` — servida en `/` |
 
 ### Pendiente
 
-| ID | Tarea | Dueño | Notas |
-|----|-------|-------|-------|
-| A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
-| B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
-| B-08 | Adapter SUTRAN → schema `Infractions` | P2 | — |
-| B-09 | Adapter Callao papeletas → merge en `Infractions` | P2 | — |
-| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
-| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
-| C-02 | Validacion/normalizacion de placa | P2 | — |
-| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+Sprint 1 completo. No hay tareas pendientes.
 
 ### Observaciones del review
 
