@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `joaquin_sprint1`
-**Sprint actual:** Sprint 1 — "Los datos entran" → ✅ **COMPLETADO Y VERIFICADO (Puerta 1 en verde)**
-**Última actualización:** 2026-08-14 (Sprint 1 completo y verificado — 65/65 tests verdes)
+**Rama activa:** `testing`
+**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P3 avanzó D-02/D-06/D-07)
+**Última actualización:** 2026-08-14 (Sprint 2: bot D-02/D-06/D-07 hechos — suite 85/85 verdes)
 
 ---
 
@@ -68,6 +68,33 @@ Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
 
 ---
 
+## Sprint 2 — Estado de tareas (bot, P3)
+
+### Completado (P3) — suite total 85/85 verdes
+
+| ID | Tarea | Dueño | Archivos |
+|----|-------|-------|----------|
+| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests, incluye supervivencia a reinicio con sqlite en archivo) |
+| D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/fixtures/verification_{go,caution,stop}.json`, `tests/test_formatters.py` (9 tests). Una columna, sin tablas → sin scroll horizontal en celular |
+| D-07 | Botones inline (Ver detalle · Calcular precio · Verificar vendedor · Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `CallbackQueryHandler` en `main.py`, `tests/test_keyboards.py` (4 tests) |
+
+### Bloqueado (dependencias inexistentes)
+
+| ID | Tarea | Bloqueado por |
+|----|-------|---------------|
+| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe en ninguna rama.** Pedir ETA a P2 |
+| D-05 | Mensajes progresivos por fuente | **C-09 (P1) no existe.** El más bloqueado. Pedir ETA a P1 |
+
+> Decisión (P3): **bloqueo estricto por dependencia**, sin stubs. D-04/D-05 esperan a C-05/C-09.
+
+### Verificación (2026-08-14)
+
+- ✅ **85/85 tests verdes** en modo mock (65 de Sprint 1 + 20 nuevos de D-02/D-06/D-07).
+- ✅ `from app.bot.main import build_application` importa sin romper.
+- Cambios en working tree de la rama `testing`, **sin commitear** (a la espera de review de un compañero, DoD §4).
+
+---
+
 ## Avisos / handoffs entre roles
 
 **→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
@@ -76,6 +103,13 @@ Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
 - Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
 - **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
 - **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+
+**→ P5 (de P3):** el copy final peruano del bot está como placeholder. Lista de textos a reemplazar
+(con sus claves y `{placeholders}` que **no** deben cambiar) en `docs/copy-placeholders-p5.md`. Cubre
+`_ASK_PLATE/_ASK_PRICE/_DONE`, los 4 `_CB_REPLIES` y las etiquetas de veredicto (`LUZ VERDE/CON CUIDADO/ALTO`).
+
+**→ P2/P1 (de P3):** D-04 espera **C-05** (`POST /verifications`) y D-05 espera **C-09** (jobs async).
+Ninguno existe aún en el repo. Avisar cuando estén en `testing` para desbloquear el bot.
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
@@ -119,11 +153,13 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 
 ---
 
-## Que viene despues (Sprint 2 — "El producto decide")
+## Sprint 2 — "El producto decide" (EN CURSO)
 
-> NO implementar Sprint 2 hasta que Puerta 1 cierre en verde.
+> Puerta 1 cerró en verde. Sprint 2 arrancó.
 
 Sprint 2 agrega: orquestacion concurrente (B-14), scoring/veredicto (C-04), endpoint de verificacion completa (C-05), tasacion (C-06), flujo conversacional del bot (D-02, D-04-D-07), verificacion de vendedor (B-12, B-13, C-03), pagina web del reporte (E-01).
+
+**Avance:** bot D-02/D-06/D-07 hechos (P3). Bloqueantes clave del bot: **C-05 (P2)** y **C-09 (P1)** aún no existen → D-04/D-05 en espera. Ver "Sprint 2 — Estado de tareas" arriba.
 
 ---
 
