@@ -5,7 +5,7 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `joaquin_sprint1`
+**Rama activa:** `sprint1-arroz`
 **Sprint actual:** Sprint 1 — "Los datos entran"
 **Última actualización:** 2026-08-14 (P3 cerró A-04, D-01, D-03)
 
@@ -30,14 +30,17 @@
 | A-04 | Bot @autodata_peru_bot creado, token en `.env`, responde desde el celular | P3 | Token en `.env` local (no versionado). Probado desde celular OK |
 | D-01 | Esqueleto del bot: polling + `/start` + `/ayuda` (< 2 s) | P3 | `app/bot/main.py`, `app/bot/handlers.py`. Copy de `/start`/`/ayuda` es placeholder → **P5** cierra el tono |
 | D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py`, `tests/test_parsers.py` — 18 tests verdes (15 casos + 3). Retorna schema `Extracted` |
+| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `migrations/schema.sql`, `app/core/database.py`, `app/repositories/models.py` (verificadas OK) |
+| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py`, `app/integrations/croma/client.py` |
+| B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
+| C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
+| — | Tests automatizados de persistencia, integración y APIs | P4 | `tests/test_persistence.py`, `tests/test_croma_client_integration.py`, `tests/test_api_endpoints.py`, `pytest.ini` |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | No existe `app/repositories/cache_repo.py` |
-| B-04 | Logging de cuota en tabla `quota_log` | P4 | Actualmente solo `print()`, no persiste |
 | B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
 | B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
 | B-08 | Adapter SUTRAN → schema `Infractions` | P2 | — |
@@ -46,6 +49,8 @@
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
 | C-02 | Validacion/normalizacion de placa | P2 | — |
 | C-11 | `GET /api/v1/quota` con datos reales | P4 | — |
+| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | — |
+| D-03 | Parser de texto libre: placa, precio, DNI | P3 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
 
 ---
