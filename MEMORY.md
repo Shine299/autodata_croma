@@ -26,12 +26,12 @@
 | B-05 | Backoff en 429 con `Retry-After`, máx 2 reintentos | P1 | Tests en `tests/test_croma_client.py` (6 tests) |
 | — | Config centralizada con pydantic-settings | P1 | `app/config.py` |
 | — | `docs/quota-log.md` estructura lista | P1 | Tabla vacía, llenar al hacer llamadas `live` |
+| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `croma_cache`, `verifications`, `appraisals`, `quota_log`, `conversations` — verificadas OK |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
-| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | DDL está en `04-PLAN-TECNICO.md §3`, falta ejecutar |
 | A-04 | Bot Telegram: `/start` responde "hola" | P3 | `app/bot/` tiene solo `__init__.py` |
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
 | B-03 | Cache read-through contra `croma_cache` con TTL | P4 | No existe `app/repositories/cache_repo.py` |
