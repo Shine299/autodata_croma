@@ -16,7 +16,7 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 | A-01 | Crear repo, estructura de carpetas de `04-PLAN-TECNICO.md`, `.env.example`, README | P1 | — | `git clone` + `uvicorn app.main:app` levanta y `/api/v1/health` responde 200 |
 | A-02 | Definir **todos** los schemas Pydantic según `03-API-DESIGN.md` | P1 | A-01 | `/docs` de FastAPI muestra los 7 recursos con sus schemas exactos |
 | A-03 | Proyecto Supabase + correr el DDL de las 5 tablas | P4 | — | Las tablas existen y se pueden insertar filas desde el dashboard |
-| A-04 | Crear el bot en @BotFather, obtener token, `/start` responde "hola" | P3 | — | Se puede escribir al bot desde el celular y contesta |
+| ✅ A-04 | Crear el bot en @BotFather, obtener token, `/start` responde "hola" | P3 | — | Se puede escribir al bot desde el celular y contesta |
 | A-05 | Obtener `CROMA_API_KEY` en platform.usecroma.com y repartirla por canal privado | P1 | — | Todos tienen la key en su `.env` local |
 | A-06 | Probar **manualmente** con curl 1 endpoint de Croma y guardar el JSON crudo | P1 | A-05 | `fixtures/sbs_sample.json` existe. Consumo anotado en `docs/quota-log.md` |
 | A-07 | Leer los 6 docs de contexto y armar el prompt base para los agentes | P5 | — | `08-PROMPTS.md` validado por el equipo |
@@ -66,9 +66,9 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
-| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | A-04 | Responde en < 2 s |
+| ✅ D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | A-04 | Responde en < 2 s |
 | D-02 | Máquina de estados (`IDLE → AWAITING_* → DONE`) persistida en `conversations` | P3 | A-03 | El estado sobrevive a un reinicio del proceso |
-| D-03 | Parser de texto libre: placa, precio ("32 mil", "S/32,000"), DNI | P3 | — | 15 casos de test, incluye "ABC-123 me lo dan a 32 mil" |
+| ✅ D-03 | Parser de texto libre: placa, precio ("32 mil", "S/32,000"), DNI | P3 | — | 15 casos de test, incluye "ABC-123 me lo dan a 32 mil" |
 | D-04 | Llamada del bot a `POST /verifications` y manejo de errores | P3 | C-05, D-02 | Un 502 de la API produce un mensaje amable, no un crash |
 | D-05 | **Mensajes progresivos** por fuente conforme van llegando | P3 | C-09, D-04 | Se ven 4-5 mensajes secuenciales, no un bloque final |
 | D-06 | Formateo del veredicto con emojis de semáforo y jerarquía visual | P3 | D-04 | Legible en pantalla de celular sin hacer scroll horizontal |
