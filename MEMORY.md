@@ -62,11 +62,12 @@ Sprint 1 completo. No hay tareas pendientes.
 
 ## Avisos / handoffs entre roles
 
-**→ P5 (de P3):** El parser de texto libre (**D-03**) ya está listo y verde.
-- Código: `app/bot/parsers.py` — función `parse_free_text(text) -> Extracted` (placa, `asking_price`, `document_number`).
-- Tests: `tests/test_parsers.py` → 18 verdes, incluye el caso ancla `"ABC-123 me lo dan a 32 mil"`.
-- **Acción para P5:** en la **Puerta 1** te toca ejecutar la prueba "el parser acierta en 15 frases distintas (≥13/15)". Ya puedes encolarla; corre `pytest tests/test_parsers.py -q`. Si quieres agregar tus propias frases, mételas a `CASES` en ese test.
-- Pendiente menor: el copy de `/start` y `/ayuda` (`app/bot/handlers.py`) es **placeholder** marcado `# copy final: P5`. El tono peruano lo cierras tú (`07-AGENTS.md §"Qué NO delegar"`).
+**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
+- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
+- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
+- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
+- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
+- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 

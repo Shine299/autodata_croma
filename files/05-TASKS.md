@@ -27,17 +27,17 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
-| B-01 | `CromaClient` con httpx async, auth, timeout, `SourceResult` | P1 | A-02 | Test unitario con `httpx.MockTransport` en verde |
-| B-02 | **Modo mock**: leer `fixtures/*.json` cuando `CROMA_MODE=mock` | P1 | B-01 | Todo el equipo desarrolla sin gastar cuota. Verificado por P4 |
-| B-03 | Caché read-through contra `croma_cache` con TTL por fuente | P4 | B-01, A-03 | Segunda llamada a la misma placa no toca la red (log lo prueba) |
-| B-04 | Logging de cuota en `quota_log` + tolerancia a headers ausentes | P4 | B-01 | `GET /api/v1/quota` devuelve datos reales |
-| B-05 | Backoff en 429 respetando `Retry-After`, máx. 2 reintentos | P1 | B-01 | Test simula 429 y verifica el reintento |
-| B-06 | Adapter **SBS SOAT** + mapper a `insurance` | P2 | B-02 | Fixture real mapeado a `InsuranceSchema` sin campos nulos inesperados |
-| B-07 | Adapter **APESEG SOAT** + merge con SBS | P2 | B-06 | `hasActiveSoat` correcto en los 4 escenarios sembrados |
-| B-08 | Adapter **SUTRAN** + mapper a `infractions` (incluye `total` PEN y `severeCount`) | P2 | B-02 | Suma de montos coincide con el fixture |
-| B-09 | Adapter **Callao papeletas** + merge en `infractions` | P2 | B-08 | Items del Callao aparecen con `source: "CALLAO"` |
-| B-10 | Adapter **SAT Lima cuenta** (por placa) → `taxDebt` | P2 | B-02 | Deuda total correcta |
-| B-11 | Adapter **SAT Lima capturas** → `captureOrder` | P2 | B-02 | Placa con captura devuelve `hasCaptureOrder: true` |
+| ✅ B-01 | `CromaClient` con httpx async, auth, timeout, `SourceResult` | P1 | A-02 | Test unitario con `httpx.MockTransport` en verde |
+| ✅ B-02 | **Modo mock**: leer `fixtures/*.json` cuando `CROMA_MODE=mock` | P1 | B-01 | Todo el equipo desarrolla sin gastar cuota. Verificado por P4 |
+| ✅ B-03 | Caché read-through contra `croma_cache` con TTL por fuente | P4 | B-01, A-03 | Segunda llamada a la misma placa no toca la red (log lo prueba) |
+| ✅ B-04 | Logging de cuota en `quota_log` + tolerancia a headers ausentes | P4 | B-01 | `GET /api/v1/quota` devuelve datos reales |
+| ✅ B-05 | Backoff en 429 respetando `Retry-After`, máx. 2 reintentos | P1 | B-01 | Test simula 429 y verifica el reintento |
+| ✅ B-06 | Adapter **SBS SOAT** + mapper a `insurance` | P2 | B-02 | Fixture real mapeado a `InsuranceSchema` sin campos nulos inesperados |
+| ✅ B-07 | Adapter **APESEG SOAT** + merge con SBS | P2 | B-06 | `hasActiveSoat` correcto en los 4 escenarios sembrados |
+| ✅ B-08 | Adapter **SUTRAN** + mapper a `infractions` (incluye `total` PEN y `severeCount`) | P2 | B-02 | Suma de montos coincide con el fixture |
+| ✅ B-09 | Adapter **Callao papeletas** + merge en `infractions` | P2 | B-08 | Items del Callao aparecen con `source: "CALLAO"` |
+| ✅ B-10 | Adapter **SAT Lima cuenta** (por placa) → `taxDebt` | P2 | B-02 | Deuda total correcta |
+| ✅ B-11 | Adapter **SAT Lima capturas** → `captureOrder` | P2 | B-02 | Placa con captura devuelve `hasCaptureOrder: true` |
 | B-12 | Adapter **SUNAT** por documento → `taxpayer` + flag `isVehicleTrader` | P4 | B-02 | Detecta correctamente actividad de venta de vehículos |
 | B-13 | Adapter **SAT Lima por DNI/RUC** → `personalDebt` | P4 | B-02 | Devuelve placas relacionadas |
 | B-14 | Ejecución concurrente de las 6 fuentes con `asyncio.gather` | P1 | B-06..B-11 | Latencia total ≈ la fuente más lenta, no la suma |
@@ -49,7 +49,7 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
 | C-01 | `POST /api/v1/vehicles/inspections` | P2 | B-14 | Response idéntico al contrato de `03-API-DESIGN.md` |
-| C-02 | Validación y normalización de placa (`ABC-123`→`ABC123`, motos) | P2 | A-02 | 10 casos de test, incluyendo inválidos → `400 invalid_plate` |
+| ✅ C-02 | Validación y normalización de placa (`ABC-123`→`ABC123`, motos) | P2 | A-02 | 10 casos de test, incluyendo inválidos → `400 invalid_plate` |
 | C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` | P4 | B-12, B-13 | `consent: false` → `400`. Documento enmascarado en el response |
 | C-04 | `scoring_service`: flags, riskScore y verdict con las reglas de la spec | P2 | C-01 | Tabla de 8 casos de test cubre todas las reglas de HU-03 |
 | C-05 | `POST /api/v1/verifications` orquestando vehículo + vendedor + score | P2 | C-01, C-03, C-04 | Los 4 escenarios sembrados devuelven el veredicto esperado |
