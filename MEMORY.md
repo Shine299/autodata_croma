@@ -26,11 +26,10 @@
 | B-05 | Backoff en 429 con `Retry-After`, máx 2 reintentos | P1 | Tests en `tests/test_croma_client.py` (6 tests) |
 | — | Config centralizada con pydantic-settings | P1 | `app/config.py` |
 | — | `docs/quota-log.md` estructura lista | P1 | Tabla vacía, llenar al hacer llamadas `live` |
-| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `croma_cache`, `verifications`, `appraisals`, `quota_log`, `conversations` — verificadas OK |
-| A-04 | Bot @autodata_peru_bot creado, token en `.env`, responde desde el celular | P3 | Token en `.env` local (no versionado). Probado desde celular OK |
-| D-01 | Esqueleto del bot: polling + `/start` + `/ayuda` (< 2 s) | P3 | `app/bot/main.py`, `app/bot/handlers.py`. Copy de `/start`/`/ayuda` es placeholder → **P5** cierra el tono |
-| D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py`, `tests/test_parsers.py` — 18 tests verdes (15 casos + 3). Retorna schema `Extracted` |
 | A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `migrations/schema.sql`, `app/core/database.py`, `app/repositories/models.py` (verificadas OK) |
+| A-04 | Bot @autodata_peru_bot creado, token en `.env`, responde desde el celular | P3 | Token en `.env` local (no versionado). Probado desde celular OK |
+| D-01 | Esqueleto del bot: polling + `/start` + `/ayuda` (< 2 s) | P3 | `app/bot/main.py`, `app/bot/handlers.py`. Copy cerrado por P5 en Sprint 2 |
+| D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py`, `tests/test_parsers.py` — 18 tests verdes (15 casos + 3). Retorna schema `Extracted` |
 | B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py`, `app/integrations/croma/client.py` |
 | B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
 | C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
@@ -46,30 +45,29 @@
 | C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
 | C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
 
-### Pendiente
-
-| ID | Tarea | Dueño | Notas |
-|----|-------|-------|-------|
-| A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
-
-### Observaciones del review
-
-- **P4 modificó `app/api/health.py`** — ahora incluye check de DB (`SELECT 1`). Mejora aceptable.
-- **P4 `pytest.ini` usa `asyncio_mode = auto`** — la rama P1 usa `strict`. Unificar al mergear.
-- **P4 `QuotaLogModel.id` usa `Integer`** en ORM pero DDL dice `BIGSERIAL`. Menor para hackathon.
-- **P3 parser de moto** — el caso `1234-AB a 32 mil` (placa moto + precio) no está testeado. Bajo riesgo.
-
 ---
 
 ## Avisos / handoffs entre roles
 
-**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
-- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
-- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
-- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
-- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
-- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+**→ P2 (de P1):** B-14 orquestador concurrente **LISTO**.
+- Importar: `from app.integrations.croma.orchestrator import fetch_all_sources, OrchestratorResult`
+- Firma: `await fetch_all_sources(client, plate) -> OrchestratorResult` — devuelve `insurance`, `infractions`, `tax_debt`, `capture_order`, `sources_summary`, `unverified_sources`.
+- **Job store para C-05 async:** usar `from app.core.jobs import job_store`. Llamar `job_store.create(sources)`, lanzar `asyncio.create_task(...)`, retornar 202. Dentro del task usar `job_store.mark_source_done()` y `job_store.complete()`.
+
+**→ P3 (de P1):** C-09 GET endpoint **LISTO** en `/api/v1/jobs/{jobId}`.
+- Responde `JobResponse` con `progress`, `completedSources`, `pendingSources`, `status`.
+- D-05 puede hacer polling a este endpoint. Falta que C-05 (P2, ya entregado en `carlos_p2_sprint2`) se mergee a `testing` para crear los jobs.
+
+**→ P3 (de P5):** copy final peruano del bot cerrado (ver "Completado por P5" arriba). Claves y
+`{placeholders}` de `docs/copy-placeholders-p5.md` respetados sin cambios. Ojo: `_DONE` cambió de
+texto (ya no menciona `D-04`), por si algún test tuyo asertaba el string exacto.
+
+**→ P2 (de P5):** **C-07 casi lista.** El prompt `NEGOTIATION_SCRIPT` ya está en `app/core/prompts.py`.
+Ya viste que entregaste `appraisal.py` en `carlos_p2_sprint2` — en cuanto esté mergeado a `testing`,
+P5 integra en menos de una hora.
+
+**→ P2/P3 (de P4):** B-12/B-13 (adapters SUNAT + SAT Lima persona) y C-03 (`POST /sellers/screenings`)
+ya no están pendientes — P4 los entregó completos. Ver tabla "Completado por P4" arriba.
 
 **→ P1 / P3 / P4 / P5 (de P2):** Orquestación y reglas de negocio cerradas (**C-04, C-05, C-06**).
 - **Acción para P3:** Ya puedes implementar **D-04** y **D-09** consumiendo los endpoints `POST /api/v1/verifications` y `POST /verifications/{id}/appraisals`.
@@ -91,20 +89,8 @@ Desde la raíz del repo, en PowerShell:
 ```
 
 Requiere `TELEGRAM_BOT_TOKEN` en `.env` (A-04). Corre en modo polling; se detiene con `Ctrl+C`.
-El `!` que usa Claude Code **no** va en PowerShell normal.
 
 ---
-
-## Decisiones tecnicas ya tomadas
-
-1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorizacion de P1.
-2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
-3. **CromaClient ya existe** — Usar `app/integrations/croma/client.py`, no crear otro cliente HTTP. Interfaz: `await client.call(source, path, body, cache_key=..., ttl=...)` → `SourceResult`.
-4. **`SourceResult` es dataclass** — en `app/integrations/croma/models.py`. Campos: `source, status, data, error, latency_ms, from_cache`.
-5. **Fixtures por nombre** — patron: `fixtures/{source}_{lookup}.json` o `fixtures/{source}_sample.json` como fallback.
-6. **Config en `app/config.py`** — `from app.config import settings`. Pydantic-settings lee de `.env`.
-7. **FastAPI + httpx + python-telegram-bot v21** — stack definido, no agregar dependencias nuevas sin justificacion.
-8. **Cuota limitada** — 100 requests/dia para TODO el equipo. ~5-6 requests por verificacion = ~16 verificaciones/dia max.
 
 ## Regla de dueño por carpeta
 
@@ -120,11 +106,15 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 
 ---
 
-## Que viene despues (Sprint 2 — "El producto decide")
+## Decisiones técnicas ya tomadas
 
-> NO implementar Sprint 2 hasta que Puerta 1 cierre en verde.
-
-Sprint 2 agrega: orquestacion concurrente (B-14), scoring/veredicto (C-04), endpoint de verificacion completa (C-05), tasacion (C-06), flujo conversacional del bot (D-02, D-04-D-07), verificacion de vendedor (B-12, B-13, C-03), pagina web del reporte (E-01).
+1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorización de P1.
+2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
+3. **CromaClient ya existe** — Usar `app/integrations/croma/client.py`, no crear otro cliente HTTP.
+4. **`SourceResult` es dataclass** — en `app/integrations/croma/models.py`.
+5. **Fixtures por nombre** — patrón: `fixtures/{source}_{lookup}.json` o `fixtures/{source}_sample.json`.
+6. **FastAPI + httpx + python-telegram-bot v21** — stack definido, no agregar dependencias nuevas sin justificación.
+7. **Cuota limitada** — 100 requests/día para todo el equipo.
 
 ---
 
@@ -132,18 +122,18 @@ Sprint 2 agrega: orquestacion concurrente (B-14), scoring/veredicto (C-04), endp
 
 1. **Leer `files/00-CONTEXTO.md` a `files/04-PLAN-TECNICO.md`** antes de implementar.
 2. **Respetar el contrato de API** de `files/03-API-DESIGN.md` — es ley.
-3. **Nunca usar `CROMA_MODE=live`** sin autorizacion explicita de P1.
+3. **Nunca usar `CROMA_MODE=live`** sin autorización explícita de P1.
 4. **Respetar dueño de carpeta** — ver tabla arriba.
-5. **No agregar dependencias** sin justificacion. El `requirements.txt` actual basta para Sprint 1.
-6. **Tests obligatorios** para logica no trivial. Usar `pytest` + `pytest-asyncio`.
-7. **No crear archivos `.md` de documentacion** extra. Este archivo y `files/` son suficientes.
+5. **No agregar dependencias** sin justificación.
+6. **Tests obligatorios** para lógica no trivial. Usar `pytest` + `pytest-asyncio`.
+7. **No crear archivos `.md` de documentación** extra. Este archivo y `files/` son suficientes.
 8. **Modo mock es el default** — todo desarrollo se hace sin tocar la red.
 
 ---
 
-## Como actualizar este archivo
+## Cómo actualizar este archivo
 
 Cada vez que cierres una tarea:
-1. Mueve la fila de "Pendiente" a "Completado" con los archivos creados/modificados.
-2. Actualiza la fecha de "Ultima actualizacion".
-3. Commitea el cambio junto con tu codigo.
+1. Mueve la fila de "Pendiente/Bloqueado" a "Completado" (o a "Entregado, pendiente de merge" si tu rama aún no se mergeó a `testing`) con los archivos creados/modificados.
+2. Actualiza la fecha de "Última actualización" y el resumen del encabezado.
+3. Commitea el cambio junto con tu código.
