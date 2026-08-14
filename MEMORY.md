@@ -7,7 +7,7 @@
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `sprint1-arroz`
 **Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P2 cerró C-02, B-06, B-07, B-08, B-09, B-10, B-11)
+**Última actualización:** 2026-08-14 (P2 cerró C-04, C-05, C-06)
 
 ---
 
@@ -42,6 +42,9 @@
 | B-09 | Adapter Callao papeletas + merge en `Infractions` (`source: CALLAO`) | P2 | `app/integrations/croma/sources/callao.py`, `fixtures/callao_sample.json`, `tests/test_adapters_infractions.py` |
 | B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | `app/integrations/croma/sources/sat_debt.py`, `fixtures/sat_lima_sample.json`, `tests/test_adapters_sat.py` |
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | `app/integrations/croma/sources/sat_captures.py`, `fixtures/sat_capturas_sample.json`, `tests/test_adapters_sat.py` |
+| C-04 | `scoring_service`: flags, riskScore y verdict | P2 | `app/services/scoring.py`, `tests/test_scoring.py` |
+| C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
+| C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
 
 ### Pendiente
 
@@ -67,6 +70,13 @@
 - Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
 - **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
 - **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+
+**→ P1 / P3 / P4 / P5 (de P2):** Orquestación y reglas de negocio cerradas (**C-04, C-05, C-06**).
+- **Acción para P3:** Ya puedes implementar **D-04** y **D-09** consumiendo los endpoints `POST /api/v1/verifications` y `POST /verifications/{id}/appraisals`.
+- **Acción para P5:** El schema de tasación ya retorna el `negotiationScript` (C-07).
+- **Acción para P4:** Cuando tengas **C-03** listo, reemplaza el mock en `app/services/sellers.py`.
+- **Acción para P1:** Cuando tengas **C-01** listo, reemplaza el mock en `app/services/vehicles.py`.
+
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
