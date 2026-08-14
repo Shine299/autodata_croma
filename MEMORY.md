@@ -7,7 +7,7 @@
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `sprint1-arroz`
 **Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P3 cerró A-04, D-01, D-03)
+**Última actualización:** 2026-08-14 (P2 cerró C-02, B-06, B-07, B-08, B-09, B-10, B-11)
 
 ---
 
@@ -35,19 +35,19 @@
 | B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
 | C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
 | — | Tests automatizados de persistencia, integración y APIs | P4 | `tests/test_persistence.py`, `tests/test_croma_client_integration.py`, `tests/test_api_endpoints.py`, `pytest.ini` |
+| C-02 | Validación y normalización de placa (autos, motos A/B, trimotos) | P2 | `app/services/plate.py`, `tests/test_plate.py` (20 tests verdes) |
+| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | `app/integrations/croma/sources/sbs.py`, `tests/test_adapters_insurance.py` |
+| B-07 | Adapter APESEG SOAT + merge con SBS (`hasActiveSoat`, póliza vigente) | P2 | `app/integrations/croma/sources/apeseg.py`, `tests/test_adapters_insurance.py` |
+| B-08 | Adapter SUTRAN → schema `Infractions` (`total` PEN, `severeCount`) | P2 | `app/integrations/croma/sources/sutran.py`, `tests/test_adapters_infractions.py` |
+| B-09 | Adapter Callao papeletas + merge en `Infractions` (`source: CALLAO`) | P2 | `app/integrations/croma/sources/callao.py`, `fixtures/callao_sample.json`, `tests/test_adapters_infractions.py` |
+| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | `app/integrations/croma/sources/sat_debt.py`, `fixtures/sat_lima_sample.json`, `tests/test_adapters_sat.py` |
+| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | `app/integrations/croma/sources/sat_captures.py`, `fixtures/sat_capturas_sample.json`, `tests/test_adapters_sat.py` |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
-| B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
-| B-08 | Adapter SUTRAN → schema `Infractions` | P2 | — |
-| B-09 | Adapter Callao papeletas → merge en `Infractions` | P2 | — |
-| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
-| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
-| C-02 | Validacion/normalizacion de placa | P2 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
 
 ### Observaciones del review
@@ -61,11 +61,12 @@
 
 ## Avisos / handoffs entre roles
 
-**→ P5 (de P3):** El parser de texto libre (**D-03**) ya está listo y verde.
-- Código: `app/bot/parsers.py` — función `parse_free_text(text) -> Extracted` (placa, `asking_price`, `document_number`).
-- Tests: `tests/test_parsers.py` → 18 verdes, incluye el caso ancla `"ABC-123 me lo dan a 32 mil"`.
-- **Acción para P5:** en la **Puerta 1** te toca ejecutar la prueba "el parser acierta en 15 frases distintas (≥13/15)". Ya puedes encolarla; corre `pytest tests/test_parsers.py -q`. Si quieres agregar tus propias frases, mételas a `CASES` en ese test.
-- Pendiente menor: el copy de `/start` y `/ayuda` (`app/bot/handlers.py`) es **placeholder** marcado `# copy final: P5`. El tono peruano lo cierras tú (`07-AGENTS.md §"Qué NO delegar"`).
+**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
+- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
+- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
+- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
+- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
+- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
