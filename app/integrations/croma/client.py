@@ -15,8 +15,13 @@ FIXTURES_DIR = Path(__file__).resolve().parents[3] / "fixtures"
 MAX_RETRIES = 2
 
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.repositories.cache_repo import CacheRepository
+from app.repositories.quota_repo import QuotaRepository
+
 class CromaClient:
-    def __init__(self) -> None:
+    def __init__(self, db: AsyncSession | None = None) -> None:
+        self._db = db
         self._client = httpx.AsyncClient(
             base_url=settings.croma_base_url,
             timeout=settings.croma_timeout_seconds,
@@ -35,26 +40,64 @@ class CromaClient:
         if settings.croma_mode == "mock":
             return self._mock_call(source, body)
 
+        lookup_key = cache_key or body.get("plate") or body.get("document_number") or "default"
+        
+        # 1. Intentar leer de caché (read-through)
+        if self._db and lookup_key:
+            try:
+                cache_repo = CacheRepository(self._db)
+                cached_data = await cache_repo.get_cached(source, lookup_key)
+                if cached_data is not None:
+                    # Registrar hit de caché en quota_log
+                    quota_repo = QuotaRepository(self._db)
+                    await quota_repo.log_quota(
+                        source=source,
+                        endpoint=path,
+                        remaining=None,
+                        request_id=None,
+                        cache_hit=True,
+                        latency_ms=0
+                    )
+                    
+                    found = cached_data.get("found", True) if isinstance(cached_data, dict) else True
+                    return SourceResult(
+                        source=source,
+                        status="ok" if found else "not_found",
+                        data=cached_data,
+                        latency_ms=0,
+                        from_cache=True,
+                    )
+            except Exception as e:
+                # Loguear error de caché pero fallar abierto (continuar a la red)
+                print(f"[cache_error] Falló la lectura de caché para {source}: {e}")
+
+        # 2. Caché miss: Realizar llamada de red
         start = time.monotonic()
         last_error: str | None = None
+        resp_obj: httpx.Response | None = None
 
         for attempt in range(1 + MAX_RETRIES):
             try:
                 resp = await self._client.post(path, json=body)
+                resp_obj = resp
             except httpx.TimeoutException:
-                return SourceResult(
+                result = SourceResult(
                     source=source,
                     status="error",
                     error="timeout",
                     latency_ms=int((time.monotonic() - start) * 1000),
                 )
+                await self._log_to_db(source, path, resp_obj, result, cache_hit=False)
+                return result
             except httpx.HTTPError as exc:
-                return SourceResult(
+                result = SourceResult(
                     source=source,
                     status="error",
                     error=str(exc),
                     latency_ms=int((time.monotonic() - start) * 1000),
                 )
+                await self._log_to_db(source, path, resp_obj, result, cache_hit=False)
+                return result
 
             self._log_quota_headers(source, resp)
 
@@ -63,36 +106,94 @@ class CromaClient:
                 if attempt < MAX_RETRIES:
                     await asyncio.sleep(retry_after)
                     continue
-                return SourceResult(
+                result = SourceResult(
                     source=source,
                     status="error",
                     error="rate_limited",
                     latency_ms=int((time.monotonic() - start) * 1000),
                 )
+                await self._log_to_db(source, path, resp, result, cache_hit=False)
+                return result
 
             if resp.status_code >= 400:
-                return SourceResult(
+                result = SourceResult(
                     source=source,
                     status="error",
                     error=f"http_{resp.status_code}",
                     latency_ms=int((time.monotonic() - start) * 1000),
                 )
+                await self._log_to_db(source, path, resp, result, cache_hit=False)
+                return result
 
             data = resp.json()
             found = data.get("found", True) if isinstance(data, dict) else True
-            return SourceResult(
+            status = "ok" if found else "not_found"
+            
+            result = SourceResult(
                 source=source,
-                status="ok" if found else "not_found",
+                status=status,
                 data=data,
                 latency_ms=int((time.monotonic() - start) * 1000),
             )
 
-        return SourceResult(
+            # 3. Guardar en caché tras respuesta exitosa
+            if self._db and lookup_key:
+                try:
+                    cache_repo = CacheRepository(self._db)
+                    await cache_repo.set_cached(
+                        source=source,
+                        lookup_key=lookup_key,
+                        payload=data,
+                        status=status,
+                        ttl_seconds=int(ttl.total_seconds())
+                    )
+                except Exception as e:
+                    print(f"[cache_error] Falló la escritura en caché para {source}: {e}")
+
+            # Registrar llamada en quota_log
+            await self._log_to_db(source, path, resp, result, cache_hit=False)
+            return result
+
+        result = SourceResult(
             source=source,
             status="error",
             error=last_error or "max_retries",
             latency_ms=int((time.monotonic() - start) * 1000),
         )
+        await self._log_to_db(source, path, resp_obj, result, cache_hit=False)
+        return result
+
+    async def _log_to_db(
+        self, 
+        source: str, 
+        endpoint: str, 
+        resp: httpx.Response | None, 
+        result: SourceResult, 
+        cache_hit: bool
+    ) -> None:
+        if not self._db:
+            return
+
+        remaining = None
+        request_id = None
+        if resp is not None:
+            remaining_hdr = resp.headers.get("X-RateLimit-Remaining")
+            if remaining_hdr is not None and remaining_hdr.isdigit():
+                remaining = int(remaining_hdr)
+            request_id = resp.headers.get("X-Request-Id")
+
+        try:
+            quota_repo = QuotaRepository(self._db)
+            await quota_repo.log_quota(
+                source=source,
+                endpoint=endpoint,
+                remaining=remaining,
+                request_id=request_id,
+                cache_hit=cache_hit,
+                latency_ms=result.latency_ms
+            )
+        except Exception as e:
+            print(f"[quota_error] Falló el registro de cuota en base de datos: {e}")
 
     def _mock_call(self, source: str, body: dict) -> SourceResult:
         # ponytail: linear scan of fixtures dir, glob if fixtures grow past ~50
@@ -116,5 +217,9 @@ class CromaClient:
         await self._client.aclose()
 
 
-def get_croma_client() -> CromaClient:
-    return CromaClient()
+from fastapi import Depends
+from app.core.database import get_db
+
+def get_croma_client(db: AsyncSession = Depends(get_db)) -> CromaClient:
+    return CromaClient(db)
+
