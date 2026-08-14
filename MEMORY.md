@@ -7,7 +7,7 @@
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `sprint1-arroz`
 **Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14
+**Última actualización:** 2026-08-14 (P3 cerró A-04, D-01, D-03)
 
 ---
 
@@ -26,6 +26,10 @@
 | B-05 | Backoff en 429 con `Retry-After`, máx 2 reintentos | P1 | Tests en `tests/test_croma_client.py` (6 tests) |
 | — | Config centralizada con pydantic-settings | P1 | `app/config.py` |
 | — | `docs/quota-log.md` estructura lista | P1 | Tabla vacía, llenar al hacer llamadas `live` |
+| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `croma_cache`, `verifications`, `appraisals`, `quota_log`, `conversations` — verificadas OK |
+| A-04 | Bot @autodata_peru_bot creado, token en `.env`, responde desde el celular | P3 | Token en `.env` local (no versionado). Probado desde celular OK |
+| D-01 | Esqueleto del bot: polling + `/start` + `/ayuda` (< 2 s) | P3 | `app/bot/main.py`, `app/bot/handlers.py`. Copy de `/start`/`/ayuda` es placeholder → **P5** cierra el tono |
+| D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py`, `tests/test_parsers.py` — 18 tests verdes (15 casos + 3). Retorna schema `Extracted` |
 | A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `migrations/schema.sql`, `app/core/database.py`, `app/repositories/models.py` (verificadas OK) |
 | B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py`, `app/integrations/croma/client.py` |
 | B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
@@ -36,7 +40,6 @@
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
-| A-04 | Bot Telegram: `/start` responde "hola" | P3 | `app/bot/` tiene solo `__init__.py` |
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
 | B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
 | B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
@@ -45,9 +48,35 @@
 | B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
 | C-02 | Validacion/normalizacion de placa | P2 | — |
+| C-11 | `GET /api/v1/quota` con datos reales | P4 | — |
 | D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | — |
 | D-03 | Parser de texto libre: placa, precio, DNI | P3 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+
+---
+
+## Avisos / handoffs entre roles
+
+**→ P5 (de P3):** El parser de texto libre (**D-03**) ya está listo y verde.
+- Código: `app/bot/parsers.py` — función `parse_free_text(text) -> Extracted` (placa, `asking_price`, `document_number`).
+- Tests: `tests/test_parsers.py` → 18 verdes, incluye el caso ancla `"ABC-123 me lo dan a 32 mil"`.
+- **Acción para P5:** en la **Puerta 1** te toca ejecutar la prueba "el parser acierta en 15 frases distintas (≥13/15)". Ya puedes encolarla; corre `pytest tests/test_parsers.py -q`. Si quieres agregar tus propias frases, mételas a `CASES` en ese test.
+- Pendiente menor: el copy de `/start` y `/ayuda` (`app/bot/handlers.py`) es **placeholder** marcado `# copy final: P5`. El tono peruano lo cierras tú (`07-AGENTS.md §"Qué NO delegar"`).
+
+**Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
+
+---
+
+## Cómo correr el bot (P3)
+
+Desde la raíz del repo, en PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.bot.main
+```
+
+Requiere `TELEGRAM_BOT_TOKEN` en `.env` (A-04). Corre en modo polling; se detiene con `Ctrl+C`.
+El `!` que usa Claude Code **no** va en PowerShell normal.
 
 ---
 
