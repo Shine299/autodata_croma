@@ -48,10 +48,14 @@
 | B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
 | C-02 | Validacion/normalizacion de placa | P2 | — |
-| C-11 | `GET /api/v1/quota` con datos reales | P4 | — |
-| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | — |
-| D-03 | Parser de texto libre: placa, precio, DNI | P3 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+
+### Observaciones del review
+
+- **P4 modificó `app/api/health.py`** — ahora incluye check de DB (`SELECT 1`). Mejora aceptable.
+- **P4 `pytest.ini` usa `asyncio_mode = auto`** — la rama P1 usa `strict`. Unificar al mergear.
+- **P4 `QuotaLogModel.id` usa `Integer`** en ORM pero DDL dice `BIGSERIAL`. Menor para hackathon.
+- **P3 parser de moto** — el caso `1234-AB a 32 mil` (placa moto + precio) no está testeado. Bajo riesgo.
 
 ---
 
