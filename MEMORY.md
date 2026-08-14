@@ -5,7 +5,7 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `joaquin_sprint1`
+**Rama activa:** `sprint1-arroz`
 **Sprint actual:** Sprint 1 — "Los datos entran"
 **Última actualización:** 2026-08-14
 
@@ -26,7 +26,11 @@
 | B-05 | Backoff en 429 con `Retry-After`, máx 2 reintentos | P1 | Tests en `tests/test_croma_client.py` (6 tests) |
 | — | Config centralizada con pydantic-settings | P1 | `app/config.py` |
 | — | `docs/quota-log.md` estructura lista | P1 | Tabla vacía, llenar al hacer llamadas `live` |
-| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `croma_cache`, `verifications`, `appraisals`, `quota_log`, `conversations` — verificadas OK |
+| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `migrations/schema.sql`, `app/core/database.py`, `app/repositories/models.py` (verificadas OK) |
+| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py`, `app/integrations/croma/client.py` |
+| B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
+| C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
+| — | Tests automatizados de persistencia, integración y APIs | P4 | `tests/test_persistence.py`, `tests/test_croma_client_integration.py`, `tests/test_api_endpoints.py`, `pytest.ini` |
 
 ### Pendiente
 
@@ -34,8 +38,6 @@
 |----|-------|-------|-------|
 | A-04 | Bot Telegram: `/start` responde "hola" | P3 | `app/bot/` tiene solo `__init__.py` |
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | No existe `app/repositories/cache_repo.py` |
-| B-04 | Logging de cuota en tabla `quota_log` | P4 | Actualmente solo `print()`, no persiste |
 | B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
 | B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
 | B-08 | Adapter SUTRAN → schema `Infractions` | P2 | — |
@@ -43,7 +45,6 @@
 | B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
 | C-02 | Validacion/normalizacion de placa | P2 | — |
-| C-11 | `GET /api/v1/quota` con datos reales | P4 | — |
 | D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | — |
 | D-03 | Parser de texto libre: placa, precio, DNI | P3 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
