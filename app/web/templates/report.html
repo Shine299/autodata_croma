@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if found %}{{ plate }} — Reporte AutoData{% else %}Reporte no encontrado — AutoData{% endif %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+  <div class="max-w-2xl mx-auto px-6 py-10">
+
+    <a href="/" class="text-gray-500 hover:text-gray-300 text-sm">← AutoData</a>
+
+    {% if not found %}
+    <div class="mt-16 text-center">
+      <p class="text-5xl mb-4">🔍</p>
+      <h1 class="text-2xl font-bold mb-2">No encontramos esta verificación</h1>
+      <p class="text-gray-400">
+        El código <code class="text-gray-300">{{ verification_id }}</code> no existe o ya expiró.
+      </p>
+      <a href="https://t.me/autodata_peru_bot" target="_blank"
+         class="inline-block mt-6 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold px-6 py-3 rounded-xl transition-colors">
+        Hacer una nueva verificación →
+      </a>
+    </div>
+    {% else %}
+
+    <!-- Semáforo -->
+    <div class="mt-6 bg-gray-900 border border-{{ verdict_color }}-500/30 rounded-2xl p-6">
+      <p class="text-{{ verdict_color }}-400 font-mono text-sm tracking-widest mb-1">PLACA {{ plate }}</p>
+      <h1 class="text-3xl font-bold text-{{ verdict_color }}-400 mb-3">{{ verdict_label }}</h1>
+      {% if risk_score is not none %}
+      <p class="text-gray-400 text-sm mb-4">Riesgo: <span class="font-bold text-gray-200">{{ risk_score }}/100</span></p>
+      {% endif %}
+      {% if headline %}<p class="text-lg text-gray-100 mb-2">{{ headline }}</p>{% endif %}
+      {% if summary %}<p class="text-gray-400 text-sm italic">{{ summary }}</p>{% endif %}
+    </div>
+
+    {% if flags %}
+    <div class="mt-6">
+      <h2 class="text-lg font-bold mb-3">Hallazgos</h2>
+      <div class="space-y-2">
+        {% for flag in flags %}
+        <div class="bg-gray-900/60 border border-gray-800 rounded-lg p-4">
+          <p class="font-bold">{{ flag.emoji }} {{ flag.title or flag.code }}</p>
+          {% if flag.detail %}<p class="text-gray-400 text-sm mt-1">{{ flag.detail }}</p>{% endif %}
+          {% if flag.source %}<p class="text-gray-600 text-xs mt-1 font-mono">{{ flag.source }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Confianza -->
+    {% if confidence %}
+    <div class="mt-6 text-sm text-gray-500">
+      Fuentes: {{ confidence.get('verifiedSources', '?') }}/{{ confidence.get('totalSources', '?') }} verificadas
+      {% if confidence.get('capped') %}<span class="text-yellow-500"> ⚠️ algunas fuentes no respondieron</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if disclaimer %}
+    <p class="mt-8 text-xs text-gray-600 border-t border-gray-800 pt-4">{{ disclaimer }}</p>
+    {% endif %}
+
+    <div class="mt-8 text-center">
+      <a href="https://t.me/autodata_peru_bot" target="_blank"
+         class="inline-block bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold px-6 py-3 rounded-xl transition-colors">
+        Verificar otro auto →
+      </a>
+    </div>
+
+    {% endif %}
+  </div>
+</body>
+</html>
