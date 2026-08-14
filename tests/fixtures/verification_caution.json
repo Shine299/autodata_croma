@@ -1,0 +1,35 @@
+{
+  "verificationId": "ver_caution_0002",
+  "createdAt": "2026-08-14T12:05:00Z",
+  "plate": "XYZ789",
+  "verdict": "CAUTION",
+  "riskScore": 52,
+  "headline": "Hay detalles que conviene revisar antes de cerrar trato.",
+  "summary": "SOAT por vencer y algunas papeletas pendientes. Nada bloqueante, pero negocia con datos.",
+  "flags": [
+    {
+      "code": "SOAT_EXPIRED",
+      "severity": "warning",
+      "title": "SOAT por vencer",
+      "detail": "Vence en 12 días.",
+      "source": "SBS"
+    },
+    {
+      "code": "DEBT",
+      "severity": "warning",
+      "title": "Papeletas pendientes",
+      "detail": "S/ 480 en 2 papeletas no graves.",
+      "source": "SUTRAN"
+    }
+  ],
+  "vehicle": {},
+  "seller": null,
+  "appraisal": null,
+  "confidence": {
+    "verifiedSources": 5,
+    "totalSources": 6,
+    "capped": true
+  },
+  "reportUrl": "https://autodata.pe/r/ver_caution_0002",
+  "disclaimer": "Datos de fuentes oficiales al momento de la consulta. No constituye asesoría legal."
+}

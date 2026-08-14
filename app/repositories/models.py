@@ -42,7 +42,23 @@ class QuotaLogModel(Base):
     cache_hit = Column(Boolean, nullable=False, default=False)
     latency_ms = Column(Integer, nullable=True)
     created_at = Column(
-        DateTime(timezone=True), 
-        nullable=False, 
+        DateTime(timezone=True),
+        nullable=False,
         default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class ConversationModel(Base):
+    """D-02 — Hilo de conversación del bot (Telegram). Espejo de la tabla 5 de
+    migrations/schema.sql. El estado persistido aquí sobrevive a un reinicio del proceso."""
+
+    __tablename__ = "conversations"
+
+    chat_id = Column(String, primary_key=True)
+    state = Column(String, nullable=False, default="IDLE")
+    context = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
