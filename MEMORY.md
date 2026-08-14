@@ -27,15 +27,21 @@
 | — | Config centralizada con pydantic-settings | P1 | `app/config.py` |
 | — | `docs/quota-log.md` estructura lista | P1 | Tabla vacía, llenar al hacer llamadas `live` |
 | A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `croma_cache`, `verifications`, `appraisals`, `quota_log`, `conversations` — verificadas OK |
+| A-04 | Bot Telegram: `/start` responde "hola" | P3 | `app/bot/handlers.py` — `/start` y `/ayuda` con copy placeholder |
+| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | `app/bot/main.py` — `run_polling()`, 2 handlers. Rama `jose-p3-sprint1` |
+| D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py` — regex robusto + 18 tests en `tests/test_parsers.py` |
+| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py` — get/set con expiración. Rama `sprint1-arroz` |
+| B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py` — persiste en DB vía SQLAlchemy async |
+| C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py` — resumen diario con hit rate, remaining, reset |
+| — | SQLAlchemy async + modelos ORM | P4 | `app/core/database.py`, `app/repositories/models.py`, fallback SQLite para tests |
+| — | Migration SQL | P4 | `migrations/schema.sql` — coincide 1:1 con DDL del plan |
+| — | Tests de persistencia y API | P4 | `tests/test_persistence.py`, `tests/test_api_endpoints.py` (5 tests) |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
-| A-04 | Bot Telegram: `/start` responde "hola" | P3 | `app/bot/` tiene solo `__init__.py` |
 | A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | No existe `app/repositories/cache_repo.py` |
-| B-04 | Logging de cuota en tabla `quota_log` | P4 | Actualmente solo `print()`, no persiste |
 | B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | No existe `app/integrations/croma/sources/` |
 | B-07 | Adapter APESEG SOAT + merge con SBS | P2 | — |
 | B-08 | Adapter SUTRAN → schema `Infractions` | P2 | — |
@@ -43,10 +49,14 @@
 | B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | — |
 | B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | — |
 | C-02 | Validacion/normalizacion de placa | P2 | — |
-| C-11 | `GET /api/v1/quota` con datos reales | P4 | — |
-| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | — |
-| D-03 | Parser de texto libre: placa, precio, DNI | P3 | — |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+
+### Observaciones del review
+
+- **P4 modificó `app/api/health.py`** — ahora incluye check de DB (`SELECT 1`). Mejora aceptable.
+- **P4 `pytest.ini` usa `asyncio_mode = auto`** — la rama P1 usa `strict`. Unificar al mergear.
+- **P4 `QuotaLogModel.id` usa `Integer`** en ORM pero DDL dice `BIGSERIAL`. Menor para hackathon.
+- **P3 parser de moto** — el caso `1234-AB a 32 mil` (placa moto + precio) no está testeado. Bajo riesgo.
 
 ---
 
