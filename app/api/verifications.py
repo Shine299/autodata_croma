@@ -1,44 +1,71 @@
-"""C-08 — Verification Retrieval API Endpoint.
-
-Provides GET /api/v1/verifications/{verification_id} to retrieve previously
-generated verification reports from persistent storage.
-"""
-
-from __future__ import annotations
-
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
+from fastapi import APIRouter
 
-from app.core.database import get_db
-from app.repositories.verification_repo import VerificationRepository
+from app.schemas.verification import VerificationRequest, VerificationResponse, Confidence
+from app.schemas.appraisal import AppraisalRequest, AppraisalResponse
+from app.services.vehicles import get_vehicle_inspection
+from app.services.sellers import get_seller_screening
+from app.services.scoring import calculate_score
+from app.services.appraisal import calculate_appraisal
 
-router = APIRouter(prefix="/verifications", tags=["verifications"])
+router = APIRouter(tags=["Verifications"])
 
+@router.post("/verifications/{verification_id}/appraisals", response_model=dict)
+async def create_appraisal(verification_id: str, req: AppraisalRequest):
+    # TODO: Fetch verification from DB using verification_id.
+    # For now, we mock the vehicle fetching to allow testing the endpoint directly.
+    vehicle = await get_vehicle_inspection("ABC123_CAUTION") # Mocked state
+    
+    appraisal = calculate_appraisal(
+        verification_id=verification_id,
+        vehicle=vehicle,
+        asking_price=req.asking_price,
+        tone=req.tone
+    )
+    return {"data": appraisal.model_dump(by_alias=True)}
 
-@router.get("/{verification_id}", status_code=status.HTTP_200_OK)
-async def get_verification_by_id(
-    verification_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Retrieves an existing verification report by verification ID."""
-    repo = VerificationRepository(db)
-    payload = await repo.get_by_id(verification_id)
-
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": {
-                    "type": "not_found",
-                    "code": "verification_not_found",
-                    "message": f"Verification report '{verification_id}' not found.",
-                }
-            },
-        )
-
-    # If payload already contains "data" envelope or is the data dict itself
-    if isinstance(payload, dict) and "data" in payload:
-        return payload
-
-    return {"data": payload}
+@router.post("/verifications", response_model=dict)
+async def create_verification(req: VerificationRequest):
+    vehicle = await get_vehicle_inspection(req.plate)
+    seller = None
+    if req.seller:
+        seller = await get_seller_screening(req.seller.document_number)
+    
+    score = calculate_score(
+        vehicle=vehicle,
+        seller=seller,
+        claimed_role=req.seller.claimed_role if req.seller else None
+    )
+    
+    verified_sources = sum(1 for s in vehicle.sources_summary if s.status != "error")
+    total_sources = len(vehicle.sources_summary)
+    
+    if seller:
+        verified_sources += sum(1 for s in seller.sources_summary if s.status != "error")
+        total_sources += len(seller.sources_summary)
+        
+    verification_id = str(uuid.uuid4())
+    
+    resp = VerificationResponse(
+        verification_id=verification_id,
+        created_at=datetime.now(timezone.utc).isoformat(),
+        plate=req.plate,
+        verdict=score.verdict,
+        risk_score=score.risk_score,
+        headline=score.headline,
+        summary=score.summary,
+        flags=score.flags,
+        vehicle=vehicle.model_dump(by_alias=True),
+        seller=seller.model_dump(by_alias=True) if seller else None,
+        appraisal=None,
+        confidence=Confidence(
+            verified_sources=verified_sources,
+            total_sources=total_sources,
+            capped=score.verdict == "CAUTION" and sum(1 for f in score.flags if f.code == "SOURCES_UNAVAILABLE") > 0
+        ),
+        report_url=f"https://autodata.pe/r/{verification_id}",
+        disclaimer="Reporte generado con fines referenciales."
+    )
+    
+    return {"data": resp.model_dump(by_alias=True)}
