@@ -5,13 +5,13 @@ Recurso 3, camelCase) en un mensaje Markdown legible en un celular: una sola col
 sin tablas, con semáforo de emojis y jerarquía visual.
 
 Delegable como "formateo de mensajes de Telegram" (07-AGENTS §Qué SÍ delegar).
-El copy final en tono peruano lo cierra P5: los textos aquí son placeholders con la
-estructura ya resuelta.
+Copy de las etiquetas cerrado por P5 (Sprint 2) — headline/summary/disclaimer/flags
+siguen viniendo de la API (scoring de P2), eso no se toca aquí.
 """
 
 from typing import Any, Dict
 
-# Semáforo del veredicto global.
+# Semáforo del veredicto global. Etiquetas: copy cerrado (P5 — Sprint 2).
 _VERDICT_EMOJI = {"GO": "🟢", "CAUTION": "🟡", "STOP": "🔴"}
 _VERDICT_LABEL = {"GO": "LUZ VERDE", "CAUTION": "CON CUIDADO", "STOP": "ALTO"}
 
