@@ -127,30 +127,6 @@ Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
 
 ---
 
-## Cómo correr el bot (P3)
-
-Desde la raíz del repo, en PowerShell:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.bot.main
-```
-
-Requiere `TELEGRAM_BOT_TOKEN` en `.env` (A-04). Corre en modo polling; se detiene con `Ctrl+C`.
-El `!` que usa Claude Code **no** va en PowerShell normal.
-
----
-
-## Decisiones tecnicas ya tomadas
-
-1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorizacion de P1.
-2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
-3. **CromaClient ya existe** — Usar `app/integrations/croma/client.py`, no crear otro cliente HTTP. Interfaz: `await client.call(source, path, body, cache_key=..., ttl=...)` → `SourceResult`.
-4. **`SourceResult` es dataclass** — en `app/integrations/croma/models.py`. Campos: `source, status, data, error, latency_ms, from_cache`.
-5. **Fixtures por nombre** — patron: `fixtures/{source}_{lookup}.json` o `fixtures/{source}_sample.json` como fallback.
-6. **Config en `app/config.py`** — `from app.config import settings`. Pydantic-settings lee de `.env`.
-7. **FastAPI + httpx + python-telegram-bot v21** — stack definido, no agregar dependencias nuevas sin justificacion.
-8. **Cuota limitada** — 100 requests/dia para TODO el equipo. ~5-6 requests por verificacion = ~16 verificaciones/dia max.
-
 ## Regla de dueño por carpeta
 
 | Persona | Carpetas |
@@ -160,8 +136,6 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 | P3 | `app/bot/` |
 | P4 | `app/repositories/`, `app/api/sellers.py`, `app/api/health.py`, migraciones |
 | P5 | `app/web/`, `docs/`, textos y copy |
-
-**No tocar carpetas de otro dueño sin coordinarse.**
 
 ---
 
@@ -188,7 +162,9 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 
 ## Como actualizar este archivo
 
-Cada vez que cierres una tarea:
-1. Mueve la fila de "Pendiente" a "Completado" con los archivos creados/modificados.
-2. Actualiza la fecha de "Ultima actualizacion".
-3. Commitea el cambio junto con tu codigo.
+1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorizacion de P1.
+2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
+3. **CromaClient ya existe** — Usar `app/integrations/croma/client.py`.
+4. **`SourceResult` es dataclass** — en `app/integrations/croma/models.py`.
+5. **Fixtures por nombre** — patron: `fixtures/{source}_{lookup}.json` o `fixtures/{source}_sample.json`.
+6. **FastAPI + httpx + python-telegram-bot v21** — stack definido.
