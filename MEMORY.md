@@ -6,8 +6,8 @@
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `testing`
-**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P3 avanzó D-02/D-06/D-07)
-**Última actualización:** 2026-08-14 (Sprint 2: bot D-02/D-06/D-07 hechos — suite 85/85 verdes)
+**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO**
+**Última actualización:** 2026-08-14 (Sprint 2: P1 B-14/C-09/C-10 + P3 D-02/D-06/D-07 — suite 86/86 verdes)
 
 ---
 
@@ -68,48 +68,60 @@ Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
 
 ---
 
-## Sprint 2 — Estado de tareas (bot, P3)
+## Sprint 2 — Estado de tareas
 
-### Completado (P3) — suite total 85/85 verdes
+### Completado — suite total 86/86 verdes
 
 | ID | Tarea | Dueño | Archivos |
 |----|-------|-------|----------|
-| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests, incluye supervivencia a reinicio con sqlite en archivo) |
-| D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/fixtures/verification_{go,caution,stop}.json`, `tests/test_formatters.py` (9 tests). Una columna, sin tablas → sin scroll horizontal en celular |
-| D-07 | Botones inline (Ver detalle · Calcular precio · Verificar vendedor · Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `CallbackQueryHandler` en `main.py`, `tests/test_keyboards.py` (4 tests) |
+| C-10 | Handler global de errores con envelope estándar | P1 | `app/main.py` (4 exception handlers), `tests/test_error_handler.py` (5 tests) |
+| B-14 | Ejecución concurrente de 6 fuentes con `asyncio.gather` | P1 | `app/integrations/croma/orchestrator.py` (`fetch_all_sources`, `OrchestratorResult`), `tests/test_orchestrator.py` (4 tests) |
+| C-09 | `GET /api/v1/jobs/{jobId}` + job store (shell — falta wiring `Prefer: respond-async` cuando C-05 exista) | P1 | `app/core/jobs.py` (`JobStore`, `JobState`), `app/api/jobs.py`, `tests/test_jobs.py` (5 tests) |
+| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests) |
+| D-06 | Formateo del veredicto con semáforo | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/test_formatters.py` (9 tests) |
+| D-07 | Botones inline (Ver detalle / Calcular precio / Verificar vendedor / Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `tests/test_keyboards.py` (4 tests) |
 
 ### Bloqueado (dependencias inexistentes)
 
 | ID | Tarea | Bloqueado por |
 |----|-------|---------------|
-| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe en ninguna rama.** Pedir ETA a P2 |
-| D-05 | Mensajes progresivos por fuente | **C-09 (P1) no existe.** El más bloqueado. Pedir ETA a P1 |
+| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe.** Pedir ETA a P2 |
+| D-05 | Mensajes progresivos por fuente | C-09 GET listo ✅ — falta **C-05 (P2)** para el wiring completo |
 
-> Decisión (P3): **bloqueo estricto por dependencia**, sin stubs. D-04/D-05 esperan a C-05/C-09.
+> D-05 ya puede hacer polling a `GET /api/v1/jobs/{jobId}`. Falta que C-05 cree los jobs al recibir `Prefer: respond-async`.
 
-### Verificación (2026-08-14)
+### Pendiente Sprint 2
 
-- ✅ **85/85 tests verdes** en modo mock (65 de Sprint 1 + 20 nuevos de D-02/D-06/D-07).
-- ✅ `from app.bot.main import build_application` importa sin romper.
-- Cambios en working tree de la rama `testing`, **sin commitear** (a la espera de review de un compañero, DoD §4).
+| ID | Tarea | Dueño | Bloqueado por |
+|----|-------|-------|---------------|
+| C-01 | `POST /vehicles/inspections` | P2 | B-14 ✅ listo — P2 importa `fetch_all_sources` de `app.integrations.croma.orchestrator` |
+| C-04 | Scoring + veredicto (GO/CAUTION/STOP) | P2 | — |
+| C-05 | `POST /verifications` (orquesta vehicle + seller + scoring) | P2 | C-01, C-04 |
+| C-06 | Tasación: calcular precio justo | P2 | C-05 |
+| B-12 | Adapter SUNAT → seller screening | P2 | — |
+| B-13 | Adapter SAT Lima persona → deuda vendedor | P2 | — |
+| C-03 | `POST /sellers/screenings` | P2 | B-12, B-13 |
+| D-04 | Bot → POST /verifications | P3 | C-05 |
+| D-05 | Mensajes progresivos por fuente | P3 | C-05 + C-09 wiring |
+| E-01 | Página web del reporte de verificación | P5 | C-05 |
 
 ---
 
 ## Avisos / handoffs entre roles
 
-**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
-- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
-- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
-- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
-- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
-- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+**→ P2 (de P1):** B-14 orquestador concurrente **LISTO**.
+- Importar: `from app.integrations.croma.orchestrator import fetch_all_sources, OrchestratorResult`
+- Firma: `await fetch_all_sources(client, plate) -> OrchestratorResult` — devuelve `insurance`, `infractions`, `tax_debt`, `capture_order`, `sources_summary`, `unverified_sources`.
+- **Acción para P2:** Implementar C-01 (`POST /vehicles/inspections`) envolviendo `OrchestratorResult` en `VehicleInspectionResponse` con `inspection_id` y timestamps.
+- **Job store para C-05 async:** Cuando implementes `Prefer: respond-async` en C-05, usar `from app.core.jobs import job_store`. Llamar `job_store.create(sources)`, lanzar `asyncio.create_task(...)`, retornar 202. Dentro del task usar `job_store.mark_source_done()` y `job_store.complete()`.
 
-**→ P5 (de P3):** el copy final peruano del bot está como placeholder. Lista de textos a reemplazar
-(con sus claves y `{placeholders}` que **no** deben cambiar) en `docs/copy-placeholders-p5.md`. Cubre
-`_ASK_PLATE/_ASK_PRICE/_DONE`, los 4 `_CB_REPLIES` y las etiquetas de veredicto (`LUZ VERDE/CON CUIDADO/ALTO`).
+**→ P3 (de P1):** C-09 GET endpoint **LISTO** en `/api/v1/jobs/{jobId}`.
+- Responde `JobResponse` con `progress`, `completedSources`, `pendingSources`, `status`.
+- D-05 puede hacer polling a este endpoint. Falta que C-05 (P2) cree los jobs.
 
-**→ P2/P1 (de P3):** D-04 espera **C-05** (`POST /verifications`) y D-05 espera **C-09** (jobs async).
-Ninguno existe aún en el repo. Avisar cuando estén en `testing` para desbloquear el bot.
+**→ P5 (de P3):** el copy final peruano del bot está como placeholder en `docs/copy-placeholders-p5.md`.
+
+**→ P2 (de P3):** D-04 espera **C-05** (`POST /verifications`). C-09 ya existe.
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
@@ -157,9 +169,7 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 
 > Puerta 1 cerró en verde. Sprint 2 arrancó.
 
-Sprint 2 agrega: orquestacion concurrente (B-14), scoring/veredicto (C-04), endpoint de verificacion completa (C-05), tasacion (C-06), flujo conversacional del bot (D-02, D-04-D-07), verificacion de vendedor (B-12, B-13, C-03), pagina web del reporte (E-01).
-
-**Avance:** bot D-02/D-06/D-07 hechos (P3). Bloqueantes clave del bot: **C-05 (P2)** y **C-09 (P1)** aún no existen → D-04/D-05 en espera. Ver "Sprint 2 — Estado de tareas" arriba.
+**Avance:** P1 entregó B-14 (orquestador), C-09 (jobs GET), C-10 (error handler). P3 entregó D-02/D-06/D-07 (bot states, formatter, keyboards). **Bloqueante principal: C-05 (P2)** — desbloquea D-04, D-05, E-01 y completa C-09.
 
 ---
 
