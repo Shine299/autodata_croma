@@ -5,68 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `testing`
-**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P1, P3, P4 y P5 completados; P2 acaba de entregar C-04/C-05/C-06 en `carlos_p2_sprint2`, sin mergear todavía)
-**Última actualización:** 2026-08-14 (P1 B-14/C-09/C-10, P3 D-02/D-06/D-07, P4 B-12/B-13/C-03/C-08 y P5 copy+E-01 [PR #15, sin mergear] en `testing` o listos para mergear — P2 C-04/C-05/C-06 recién subido en su rama, pendiente de merge)
-
----
-
-## Sprint 2 — Estado de tareas
-
-### Completado por P1 (Infra / Orquestación)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| C-10 | Handler global de errores con envelope estándar | P1 | `app/main.py` (4 exception handlers), `tests/test_error_handler.py` (5 tests) |
-| B-14 | Ejecución concurrente de 6 fuentes con `asyncio.gather` | P1 | `app/integrations/croma/orchestrator.py` (`fetch_all_sources`, `OrchestratorResult`), `tests/test_orchestrator.py` (4 tests) |
-| C-09 | `GET /api/v1/jobs/{jobId}` + job store (shell — falta wiring `Prefer: respond-async` cuando C-05 esté mergeado) | P1 | `app/core/jobs.py` (`JobStore`, `JobState`), `app/api/jobs.py`, `tests/test_jobs.py` (5 tests) |
-
-### Entregado por P2, pendiente de merge a `testing`
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| C-04 | Scoring + veredicto (GO/CAUTION/STOP) | P2 | `app/services/scoring.py`, `tests/test_scoring.py` |
-| C-05 | `POST /verifications` (orquesta vehicle + seller + scoring) | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
-| C-06 | Tasación: calcular precio justo | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
-
-Rama `carlos_p2_sprint2`, commit `73f301e`. Desbloquea D-04, D-05 (wiring completo con C-09) y **C-07 (P5)**
-en cuanto se mergee a `testing`.
-
-### Completado por P3 (Bot Telegram)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests, incluye supervivencia a reinicio con sqlite en archivo) |
-| D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/fixtures/verification_{go,caution,stop}.json`, `tests/test_formatters.py` (9 tests). Una columna, sin tablas → sin scroll horizontal en celular |
-| D-07 | Botones inline (Ver detalle · Calcular precio · Verificar vendedor · Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `CallbackQueryHandler` en `main.py`, `tests/test_keyboards.py` (4 tests) |
-
-### Completado por P4 (Data / Infra / Repositories)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| B-12 | Adapter **SUNAT** por documento → `taxpayer` + detector `isVehicleTrader` | P4 | `app/integrations/croma/sources/sunat.py`, `fixtures/sunat_sample.json`, `fixtures/sunat_20100100101.json` |
-| B-13 | Adapter **SAT Lima por DNI/RUC** → `personalDebt` + placas relacionadas | P4 | `app/integrations/croma/sources/sat_seller.py`, `fixtures/sat_seller_sample.json`, `fixtures/sat_seller_clean.json` |
-| C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` (Art. VI) + enmascarado | P4 | `app/services/seller.py`, `app/api/sellers.py`, `app/main.py` |
-| C-08 | `GET /api/v1/verifications/{id}` desde Supabase/DB + hashing ético de documento | P4 | `app/repositories/verification_repo.py`, `app/api/verifications.py`, `app/main.py` |
-| — | Modelos completos ORM (5 tablas: croma_cache, quota_log, verifications, appraisals, conversations) | P4 | `app/repositories/models.py` |
-| — | Suite completa de tests automatizados de Sprint 2 P4 | P4 | `tests/test_adapters_sunat.py`, `tests/test_adapters_sat_seller.py`, `tests/test_sellers_api.py`, `tests/test_verification_persistence.py` |
-
-### Completado por P5 (Producto)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| — | Copy final peruano del bot (cierra el handoff de P3 en `docs/copy-placeholders-p5.md`) | P5 | `app/bot/handlers.py` (`_START_TEXT`, `_AYUDA_TEXT`, `_ASK_PLATE`, `_ASK_PRICE`, `_DONE`, `_CB_REPLIES`), `app/bot/formatters.py` (`_VERDICT_LABEL`). Fix aplicado: `_DONE` filtraba una nota de desarrollo interna (`D-04`) al usuario final |
-| E-01 | Página pública `/r/{verificationId}` (semáforo + hallazgos + fuentes) | P5 | `app/web/routes.py`, `app/web/templates/report.html`, `tests/test_report_page.py` (5 tests, sembrados con `tests/fixtures/verification_{go,caution,stop}.json`). Vocabulario de veredicto (COMPRA/OJO/NO COMPRES) reutilizado de la landing de Sprint 1 |
-
-Rama `chimbotano`, [PR #15](https://github.com/Shine299/autodata_croma/pull/15) → `testing`, sin mergear todavía.
-
-### Bloqueado / pendiente de merge
-
-| ID | Tarea | Dueño | Estado |
-|----|-------|-------|--------|
-| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | P3 | C-05 ya existe en `carlos_p2_sprint2` — falta merge a `testing` |
-| D-05 | Mensajes progresivos por fuente | P3 | C-09 (GET) listo ✅ — falta que C-05 (ya entregado por P2) se mergee para el wiring completo |
-| C-07 | Guion de negociación (`negotiationScript`) | P5 | El prompt (`app/core/prompts.py::NEGOTIATION_SCRIPT`) ya está listo desde Sprint 1. `appraisal_service` (C-06) ya existe en `carlos_p2_sprint2` — falta que se mergee a `testing` para integrar contra la versión final |
+**Rama activa:** `sprint1-arroz`
+**Sprint actual:** Sprint 1 — "Los datos entran"
+**Última actualización:** 2026-08-14 (P2 cerró C-04, C-05, C-06)
 
 ---
 
@@ -93,25 +34,16 @@ Rama `chimbotano`, [PR #15](https://github.com/Shine299/autodata_croma/pull/15) 
 | B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py`, `app/integrations/croma/client.py` |
 | C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py`, `app/api/health.py`, `app/main.py` |
 | — | Tests automatizados de persistencia, integración y APIs | P4 | `tests/test_persistence.py`, `tests/test_croma_client_integration.py`, `tests/test_api_endpoints.py`, `pytest.ini` |
-| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | `app/integrations/croma/sources/sbs.py`. Rama `carlos_p2_sprint1` |
-| B-07 | Adapter APESEG SOAT + merge con SBS | P2 | `sources/apeseg.py` — `merge_insurance_sources()` |
-| B-08 | Adapter SUTRAN → schema `Infractions` | P2 | `sources/sutran.py` — clasificación de severidad con fallback |
-| B-09 | Adapter Callao papeletas → merge en `Infractions` | P2 | `sources/callao.py` — `merge_infractions()` |
-| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | `sources/sat_debt.py` |
-| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | `sources/sat_captures.py` |
-| C-02 | Validación/normalización de placa | P2 | `app/services/plate.py` — 4 formatos peruanos, 20 tests en `tests/test_plate.py` |
-| — | Fixtures SAT y Callao | P2 | `fixtures/callao_sample.json`, `sat_lima_sample.json`, `sat_capturas_sample.json` |
-| — | Tests de adapters | P2 | `tests/test_adapters_insurance.py`, `test_adapters_infractions.py`, `test_adapters_sat.py` (16 tests) |
-| A-07 | Prompts base del producto | P5 | `app/core/prompts.py` — 4 prompts: identidad, extracción, veredicto, negociación |
-| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/landing.html`, `app/web/routes.py` — servida en `/` |
-
-### Verificación de cierre (Puerta 1) — 2026-08-14
-
-- ✅ Suite completa en verde en modo mock (sin gastar cuota).
-- ✅ `app.main` importa; landing `/`, `/api/v1/health` y `/api/v1/quota` responden **200**.
-- 🔧 **Entorno:** el `.venv` puede estar incompleto → correr `pip install -r requirements.txt`. Usar siempre `.\.venv\Scripts\python.exe`.
-- 🔧 **Fix aplicado en `app/api/quota.py`:** degrada con gracia (try/except → 200 con `database: error: ...`) en vez de propagar stacktrace cuando la DB no responde.
-- ⚠️ **DB:** el `.env` puede apuntar a una Supabase cuyo `DATABASE_URL` no resuelve DNS localmente; los tests usan el fallback SQLite en memoria de `app/core/database.py`. Validar la conexión real a Supabase con red antes de la demo.
+| C-02 | Validación y normalización de placa (autos, motos A/B, trimotos) | P2 | `app/services/plate.py`, `tests/test_plate.py` (20 tests verdes) |
+| B-06 | Adapter SBS SOAT → schema `Insurance` | P2 | `app/integrations/croma/sources/sbs.py`, `tests/test_adapters_insurance.py` |
+| B-07 | Adapter APESEG SOAT + merge con SBS (`hasActiveSoat`, póliza vigente) | P2 | `app/integrations/croma/sources/apeseg.py`, `tests/test_adapters_insurance.py` |
+| B-08 | Adapter SUTRAN → schema `Infractions` (`total` PEN, `severeCount`) | P2 | `app/integrations/croma/sources/sutran.py`, `tests/test_adapters_infractions.py` |
+| B-09 | Adapter Callao papeletas + merge en `Infractions` (`source: CALLAO`) | P2 | `app/integrations/croma/sources/callao.py`, `fixtures/callao_sample.json`, `tests/test_adapters_infractions.py` |
+| B-10 | Adapter SAT Lima cuenta → schema `TaxDebt` | P2 | `app/integrations/croma/sources/sat_debt.py`, `fixtures/sat_lima_sample.json`, `tests/test_adapters_sat.py` |
+| B-11 | Adapter SAT Lima capturas → schema `CaptureOrder` | P2 | `app/integrations/croma/sources/sat_captures.py`, `fixtures/sat_capturas_sample.json`, `tests/test_adapters_sat.py` |
+| C-04 | `scoring_service`: flags, riskScore y verdict | P2 | `app/services/scoring.py`, `tests/test_scoring.py` |
+| C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
+| C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
 
 ---
 
@@ -136,6 +68,13 @@ P5 integra en menos de una hora.
 
 **→ P2/P3 (de P4):** B-12/B-13 (adapters SUNAT + SAT Lima persona) y C-03 (`POST /sellers/screenings`)
 ya no están pendientes — P4 los entregó completos. Ver tabla "Completado por P4" arriba.
+
+**→ P1 / P3 / P4 / P5 (de P2):** Orquestación y reglas de negocio cerradas (**C-04, C-05, C-06**).
+- **Acción para P3:** Ya puedes implementar **D-04** y **D-09** consumiendo los endpoints `POST /api/v1/verifications` y `POST /verifications/{id}/appraisals`.
+- **Acción para P5:** El schema de tasación ya retorna el `negotiationScript` (C-07).
+- **Acción para P4:** Cuando tengas **C-03** listo, reemplaza el mock en `app/services/sellers.py`.
+- **Acción para P1:** Cuando tengas **C-01** listo, reemplaza el mock en `app/services/vehicles.py`.
+
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 

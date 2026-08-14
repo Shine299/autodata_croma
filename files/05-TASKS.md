@@ -51,9 +51,9 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 | C-01 | `POST /api/v1/vehicles/inspections` | P2 | B-14 | Response idéntico al contrato de `03-API-DESIGN.md` |
 | ✅ C-02 | Validación y normalización de placa (`ABC-123`→`ABC123`, motos) | P2 | A-02 | 10 casos de test, incluyendo inválidos → `400 invalid_plate` |
 | C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` | P4 | B-12, B-13 | `consent: false` → `400`. Documento enmascarado en el response |
-| C-04 | `scoring_service`: flags, riskScore y verdict con las reglas de la spec | P2 | C-01 | Tabla de 8 casos de test cubre todas las reglas de HU-03 |
-| C-05 | `POST /api/v1/verifications` orquestando vehículo + vendedor + score | P2 | C-01, C-03, C-04 | Los 4 escenarios sembrados devuelven el veredicto esperado |
-| C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | C-05 | Deducciones cuadran al centavo con el fixture |
+| ✅ C-04 | `scoring_service`: flags, riskScore y verdict con las reglas de la spec | P2 | C-01 | Tabla de 8 casos de test cubre todas las reglas de HU-03 |
+| ✅ C-05 | `POST /api/v1/verifications` orquestando vehículo + vendedor + score | P2 | C-01, C-03, C-04 | Los 4 escenarios sembrados devuelven el veredicto esperado |
+| ✅ C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | C-05 | Deducciones cuadran al centavo con el fixture |
 | C-07 | Generación del `negotiationScript` (plantilla + datos) | P5 | C-06 | Texto legible, en español peruano, sin jerga registral |
 | C-08 | `GET /verifications/{id}` desde Supabase | P4 | C-05, A-03 | Se recupera una verificación creada hace 10 min |
 | C-09 | `GET /api/v1/jobs/{jobId}` + modo async con `Prefer: respond-async` | P1 | C-05 | Progreso incremental visible en el polling |
