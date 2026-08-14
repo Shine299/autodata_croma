@@ -3,8 +3,8 @@
 - D-01: comandos /start y /ayuda.
 - D-02: máquina de estados sobre texto libre (on_text), persistida en `conversations`.
 
-Copy provisional (placeholder). El tono final en español peruano lo cierra P5
-(ver 07-AGENTS.md §"Qué NO delegar").
+Copy cerrado por P5 (Sprint 2) — tono peruano final, según docs/copy-placeholders-p5.md.
+Claves y {placeholders} sin cambios respecto al placeholder original de P3.
 """
 
 from telegram import Update
@@ -16,14 +16,14 @@ from app.bot.states import State
 from app.core.database import async_session_maker
 from app.repositories.conversation_repo import ConversationRepository
 
-# copy final: P5
+# copy cerrado (P5 — Sprint 2)
 _START_TEXT = (
     "¡Hola! Soy *AutoData* 🚗\n"
     "Te ayudo a verificar un auto usado en Perú antes de comprarlo.\n\n"
     "Escríbeme una placa (ej. `ABC-123`) o usa /ayuda para ver qué puedo hacer."
 )
 
-# copy final: P5
+# copy cerrado (P5 — Sprint 2)
 _AYUDA_TEXT = (
     "*¿Qué puedo hacer?*\n"
     "• Verificar un vehículo por su placa.\n"
@@ -44,12 +44,12 @@ async def ayuda(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # --- D-02: máquina de estados sobre texto libre ---------------------------
 
-# copy final: P5
+# copy cerrado (P5 — Sprint 2)
 _ASK_PLATE = "Mándame la placa del auto (ej. `ABC-123`) y lo reviso. 🚗"
 _ASK_PRICE = "Anotada la placa *{plate}*. ¿A cuánto te lo ofrecen? (ej. `32 mil`)"
 _DONE = (
     "Listo: placa *{plate}* a *S/ {price:,.0f}*.\n"
-    "_(La verificación completa llega cuando la API esté lista — D-04.)_"
+    "_Dame un momento, estoy revisando las fuentes oficiales para darte el veredicto._"
 )
 
 
@@ -94,9 +94,9 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # --- D-07: botones inline -------------------------------------------------
 
-# copy final: P5
+# copy cerrado (P5 — Sprint 2)
 _CB_REPLIES = {
-    CB_DETAIL: "Abre el detalle completo aquí: {vid}",
+    CB_DETAIL: "Aquí tienes el detalle completo: {vid}",
     CB_APPRAISE: "Dale, ¿a cuánto te lo ofrecen? Escríbeme el precio (ej. `32 mil`).",
     CB_SELLER: "Para revisar al vendedor necesito tu *sí* explícito y su documento.",
     CB_NEW: "¡Listo! Mándame otra placa cuando quieras. 🚗",
