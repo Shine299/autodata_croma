@@ -1,0 +1,7 @@
+{
+  "found": true,
+  "has_debt": true,
+  "total": 1250.50,
+  "item_count": 2,
+  "related_plates": ["ABC123", "XYZ789"]
+}
