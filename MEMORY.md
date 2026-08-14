@@ -6,8 +6,8 @@
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `testing`
-**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P3 y P4 completados)
-**Última actualización:** 2026-08-14 (Sprint 2: P3 bot D-02/D-06/D-07 y P4 B-12/B-13/C-03/C-08 completados)
+**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P3, P4 y P5 completados; P1 en curso; P2 sin empezar)
+**Última actualización:** 2026-08-14 (Sprint 2: P3 bot D-02/D-06/D-07, P4 B-12/B-13/C-03/C-08 y P5 copy+E-01 completados — PR #15)
 
 ---
 
@@ -32,12 +32,22 @@
 | D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/fixtures/verification_{go,caution,stop}.json`, `tests/test_formatters.py` (9 tests). Una columna, sin tablas → sin scroll horizontal en celular |
 | D-07 | Botones inline (Ver detalle · Calcular precio · Verificar vendedor · Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `CallbackQueryHandler` en `main.py`, `tests/test_keyboards.py` (4 tests) |
 
+### Completado por P5 (Producto)
+
+| ID | Tarea | Dueño | Archivos |
+|----|-------|-------|----------|
+| — | Copy final peruano del bot (cierra el handoff de P3 en `docs/copy-placeholders-p5.md`) | P5 | `app/bot/handlers.py` (`_START_TEXT`, `_AYUDA_TEXT`, `_ASK_PLATE`, `_ASK_PRICE`, `_DONE`, `_CB_REPLIES`), `app/bot/formatters.py` (`_VERDICT_LABEL`). Fix aplicado: `_DONE` filtraba una nota de desarrollo interna (`D-04`) al usuario final |
+| E-01 | Página pública `/r/{verificationId}` (semáforo + hallazgos + fuentes) | P5 | `app/web/routes.py`, `app/web/templates/report.html`, `tests/test_report_page.py` (5 tests, sembrados con `tests/fixtures/verification_{go,caution,stop}.json`). Vocabulario de veredicto (COMPRA/OJO/NO COMPRES) reutilizado de la landing de Sprint 1 |
+
+Rama `chimbotano`, [PR #15](https://github.com/Shine299/autodata_croma/pull/15) → `testing`, sin mergear todavía. Suite completa: 107/107 verdes.
+
 ### Bloqueado (dependencias pendientes)
 
 | ID | Tarea | Bloqueado por |
 |----|-------|---------------|
 | D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe en ninguna rama.** Pedir ETA a P2 |
 | D-05 | Mensajes progresivos por fuente | **C-09 (P1) no existe.** El más bloqueado. Pedir ETA a P1 |
+| C-07 | Guion de negociación (`negotiationScript`) — P5 | **C-06 (P2, `appraisal_service`) no existe en ninguna rama.** El prompt (`app/core/prompts.py::NEGOTIATION_SCRIPT`) ya está listo desde Sprint 1; falta el servicio de P2 para tener datos reales que pasarle. Pedir ETA a P2 |
 
 ---
 
@@ -88,9 +98,13 @@
 - **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
 - **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
 
-**→ P5 (de P3):** el copy final peruano del bot está como placeholder. Lista de textos a reemplazar
-(con sus claves y `{placeholders}` que **no** deben cambiar) en `docs/copy-placeholders-p5.md`. Cubre
-`_ASK_PLATE/_ASK_PRICE/_DONE`, los 4 `_CB_REPLIES` y las etiquetas de veredicto (`LUZ VERDE/CON CUIDADO/ALTO`).
+**→ P3 (de P5):** copy final peruano del bot cerrado (ver "Completado por P5" arriba). Claves y
+`{placeholders}` de `docs/copy-placeholders-p5.md` respetados sin cambios. Ojo: `_DONE` cambió de
+texto (ya no menciona `D-04`), por si algún test tuyo asertaba el string exacto.
+
+**→ P2 (de P5):** **C-07 bloqueada** esperando `appraisal_service` (C-06). El prompt
+`NEGOTIATION_SCRIPT` ya está listo en `app/core/prompts.py` — en cuanto exista el servicio con las
+deducciones reales, P5 puede integrar en menos de una hora. Avisar ETA.
 
 **→ P2/P1 (de P3):** D-04 espera **C-05** (`POST /verifications`) y D-05 espera **C-09** (jobs async).
 Ninguno existe aún en el repo. Avisar cuando estén en `testing` para desbloquear el bot.
