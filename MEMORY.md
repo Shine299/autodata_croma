@@ -6,38 +6,8 @@
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
 **Rama activa:** `testing`
-**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO** (P3 y P4 completados)
-**Última actualización:** 2026-08-14 (Sprint 2: P3 bot D-02/D-06/D-07 y P4 B-12/B-13/C-03/C-08 completados)
-
----
-
-## Sprint 2 — Estado de tareas
-
-### Completado por P4 (Data / Infra / Repositories)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| B-12 | Adapter **SUNAT** por documento → `taxpayer` + detector `isVehicleTrader` | P4 | `app/integrations/croma/sources/sunat.py`, `fixtures/sunat_sample.json`, `fixtures/sunat_20100100101.json` |
-| B-13 | Adapter **SAT Lima por DNI/RUC** → `personalDebt` + placas relacionadas | P4 | `app/integrations/croma/sources/sat_seller.py`, `fixtures/sat_seller_sample.json`, `fixtures/sat_seller_clean.json` |
-| C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` (Art. VI) + enmascarado | P4 | `app/services/seller.py`, `app/api/sellers.py`, `app/main.py` |
-| C-08 | `GET /api/v1/verifications/{id}` desde Supabase/DB + hashing ético de documento | P4 | `app/repositories/verification_repo.py`, `app/api/verifications.py`, `app/main.py` |
-| — | Modelos completos ORM (5 tablas: croma_cache, quota_log, verifications, appraisals, conversations) | P4 | `app/repositories/models.py` |
-| — | Suite completa de tests automatizados de Sprint 2 P4 | P4 | `tests/test_adapters_sunat.py`, `tests/test_adapters_sat_seller.py`, `tests/test_sellers_api.py`, `tests/test_verification_persistence.py` |
-
-### Completado por P3 (Bot Telegram)
-
-| ID | Tarea | Dueño | Archivos |
-|----|-------|-------|----------|
-| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests, incluye supervivencia a reinicio con sqlite en archivo) |
-| D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/fixtures/verification_{go,caution,stop}.json`, `tests/test_formatters.py` (9 tests). Una columna, sin tablas → sin scroll horizontal en celular |
-| D-07 | Botones inline (Ver detalle · Calcular precio · Verificar vendedor · Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `CallbackQueryHandler` en `main.py`, `tests/test_keyboards.py` (4 tests) |
-
-### Bloqueado (dependencias pendientes)
-
-| ID | Tarea | Bloqueado por |
-|----|-------|---------------|
-| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe en ninguna rama.** Pedir ETA a P2 |
-| D-05 | Mensajes progresivos por fuente | **C-09 (P1) no existe.** El más bloqueado. Pedir ETA a P1 |
+**Sprint actual:** Sprint 2 — "El producto decide" → 🟨 **EN CURSO**
+**Última actualización:** 2026-08-14 (Sprint 2: P1 B-14/C-09/C-10 + P3 D-02/D-06/D-07 — suite 86/86 verdes)
 
 ---
 
@@ -77,23 +47,81 @@
 | A-07 | Prompts base del producto | P5 | `app/core/prompts.py` — 4 prompts: identidad, extracción, veredicto, negociación |
 | E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/landing.html`, `app/web/routes.py` — servida en `/` |
 
+### Pendiente
+
+Sprint 1 completo. No hay tareas pendientes. **Listo para arrancar Sprint 2.**
+
+### Verificación de cierre (Puerta 1) — 2026-08-14
+
+- ✅ **Suite completa: 65/65 tests en verde** en modo mock (sin gastar cuota).
+- ✅ `app.main` importa; landing `/`, `/api/v1/health` y `/api/v1/quota` responden **200**.
+- 🔧 **Entorno:** el `.venv` estaba incompleto → se corrió `pip install -r requirements.txt`. Sin ese install `app.main` no importa (falta `fastapi`) y 4 módulos de test no colectan (falta `sqlalchemy`). Usar siempre `.\.venv\Scripts\python.exe`.
+- 🔧 **Fix aplicado en `app/api/quota.py`:** ahora degrada con gracia (try/except → 200 con `database: error: ...`) igual que `/health`, en vez de propagar stacktrace cuando la DB no responde. README actualizado con nota de install + sección "Verificar que arranca".
+- ⚠️ **DB:** el `.env` apunta a una Supabase cuyo `DATABASE_URL` no resuelve DNS localmente; los tests usan el fallback SQLite en memoria de `app/core/database.py`. Validar la conexión real a Supabase en un entorno con red antes de la demo.
+
+### Observaciones del review
+
+- **P4 modificó `app/api/health.py`** — ahora incluye check de DB (`SELECT 1`). Mejora aceptable.
+- **P4 `pytest.ini` usa `asyncio_mode = auto`** — la rama P1 usa `strict`. Unificar al mergear.
+- **P4 `QuotaLogModel.id` usa `Integer`** en ORM pero DDL dice `BIGSERIAL`. Menor para hackathon.
+- **P3 parser de moto** — el caso `1234-AB a 32 mil` (placa moto + precio) no está testeado. Bajo riesgo.
+
+---
+
+## Sprint 2 — Estado de tareas
+
+### Completado — suite total 86/86 verdes
+
+| ID | Tarea | Dueño | Archivos |
+|----|-------|-------|----------|
+| C-10 | Handler global de errores con envelope estándar | P1 | `app/main.py` (4 exception handlers), `tests/test_error_handler.py` (5 tests) |
+| B-14 | Ejecución concurrente de 6 fuentes con `asyncio.gather` | P1 | `app/integrations/croma/orchestrator.py` (`fetch_all_sources`, `OrchestratorResult`), `tests/test_orchestrator.py` (4 tests) |
+| C-09 | `GET /api/v1/jobs/{jobId}` + job store (shell — falta wiring `Prefer: respond-async` cuando C-05 exista) | P1 | `app/core/jobs.py` (`JobStore`, `JobState`), `app/api/jobs.py`, `tests/test_jobs.py` (5 tests) |
+| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/models.py` (`ConversationModel`), `app/repositories/conversation_repo.py`, `on_text`+`next_state` en `app/bot/handlers.py`, `MessageHandler` en `app/bot/main.py`, `tests/test_conversation_repo.py` (7 tests) |
+| D-06 | Formateo del veredicto con semáforo | P3 | `app/bot/formatters.py` (`format_verdict`), `tests/test_formatters.py` (9 tests) |
+| D-07 | Botones inline (Ver detalle / Calcular precio / Verificar vendedor / Nueva consulta) | P3 | `app/bot/keyboards.py` (`verdict_keyboard`), `on_callback` router en `handlers.py`, `tests/test_keyboards.py` (4 tests) |
+
+### Bloqueado (dependencias inexistentes)
+
+| ID | Tarea | Bloqueado por |
+|----|-------|---------------|
+| D-04 | Bot → `POST /verifications` + manejo de errores (502 amable) | **C-05 (P2) no existe.** Pedir ETA a P2 |
+| D-05 | Mensajes progresivos por fuente | C-09 GET listo ✅ — falta **C-05 (P2)** para el wiring completo |
+
+> D-05 ya puede hacer polling a `GET /api/v1/jobs/{jobId}`. Falta que C-05 cree los jobs al recibir `Prefer: respond-async`.
+
+### Pendiente Sprint 2
+
+| ID | Tarea | Dueño | Bloqueado por |
+|----|-------|-------|---------------|
+| C-01 | `POST /vehicles/inspections` | P2 | B-14 ✅ listo — P2 importa `fetch_all_sources` de `app.integrations.croma.orchestrator` |
+| C-04 | Scoring + veredicto (GO/CAUTION/STOP) | P2 | — |
+| C-05 | `POST /verifications` (orquesta vehicle + seller + scoring) | P2 | C-01, C-04 |
+| C-06 | Tasación: calcular precio justo | P2 | C-05 |
+| B-12 | Adapter SUNAT → seller screening | P2 | — |
+| B-13 | Adapter SAT Lima persona → deuda vendedor | P2 | — |
+| C-03 | `POST /sellers/screenings` | P2 | B-12, B-13 |
+| D-04 | Bot → POST /verifications | P3 | C-05 |
+| D-05 | Mensajes progresivos por fuente | P3 | C-05 + C-09 wiring |
+| E-01 | Página web del reporte de verificación | P5 | C-05 |
+
 ---
 
 ## Avisos / handoffs entre roles
 
-**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
-- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
-- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
-- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
-- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
-- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+**→ P2 (de P1):** B-14 orquestador concurrente **LISTO**.
+- Importar: `from app.integrations.croma.orchestrator import fetch_all_sources, OrchestratorResult`
+- Firma: `await fetch_all_sources(client, plate) -> OrchestratorResult` — devuelve `insurance`, `infractions`, `tax_debt`, `capture_order`, `sources_summary`, `unverified_sources`.
+- **Acción para P2:** Implementar C-01 (`POST /vehicles/inspections`) envolviendo `OrchestratorResult` en `VehicleInspectionResponse` con `inspection_id` y timestamps.
+- **Job store para C-05 async:** Cuando implementes `Prefer: respond-async` en C-05, usar `from app.core.jobs import job_store`. Llamar `job_store.create(sources)`, lanzar `asyncio.create_task(...)`, retornar 202. Dentro del task usar `job_store.mark_source_done()` y `job_store.complete()`.
 
-**→ P5 (de P3):** el copy final peruano del bot está como placeholder. Lista de textos a reemplazar
-(con sus claves y `{placeholders}` que **no** deben cambiar) en `docs/copy-placeholders-p5.md`. Cubre
-`_ASK_PLATE/_ASK_PRICE/_DONE`, los 4 `_CB_REPLIES` y las etiquetas de veredicto (`LUZ VERDE/CON CUIDADO/ALTO`).
+**→ P3 (de P1):** C-09 GET endpoint **LISTO** en `/api/v1/jobs/{jobId}`.
+- Responde `JobResponse` con `progress`, `completedSources`, `pendingSources`, `status`.
+- D-05 puede hacer polling a este endpoint. Falta que C-05 (P2) cree los jobs.
 
-**→ P2/P1 (de P3):** D-04 espera **C-05** (`POST /verifications`) y D-05 espera **C-09** (jobs async).
-Ninguno existe aún en el repo. Avisar cuando estén en `testing` para desbloquear el bot.
+**→ P5 (de P3):** el copy final peruano del bot está como placeholder en `docs/copy-placeholders-p5.md`.
+
+**→ P2 (de P3):** D-04 espera **C-05** (`POST /verifications`). C-09 ya existe.
 
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
@@ -111,7 +139,28 @@ Ninguno existe aún en el repo. Avisar cuando estén en `testing` para desbloque
 
 ---
 
-## Decisiones tecnicas ya tomadas
+## Sprint 2 — "El producto decide" (EN CURSO)
+
+> Puerta 1 cerró en verde. Sprint 2 arrancó.
+
+**Avance:** P1 entregó B-14 (orquestador), C-09 (jobs GET), C-10 (error handler). P3 entregó D-02/D-06/D-07 (bot states, formatter, keyboards). **Bloqueante principal: C-05 (P2)** — desbloquea D-04, D-05, E-01 y completa C-09.
+
+---
+
+## Reglas para agentes de IA
+
+1. **Leer `files/00-CONTEXTO.md` a `files/04-PLAN-TECNICO.md`** antes de implementar.
+2. **Respetar el contrato de API** de `files/03-API-DESIGN.md` — es ley.
+3. **Nunca usar `CROMA_MODE=live`** sin autorizacion explicita de P1.
+4. **Respetar dueño de carpeta** — ver tabla arriba.
+5. **No agregar dependencias** sin justificacion. El `requirements.txt` actual basta para Sprint 1.
+6. **Tests obligatorios** para logica no trivial. Usar `pytest` + `pytest-asyncio`.
+7. **No crear archivos `.md` de documentacion** extra. Este archivo y `files/` son suficientes.
+8. **Modo mock es el default** — todo desarrollo se hace sin tocar la red.
+
+---
+
+## Como actualizar este archivo
 
 1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorizacion de P1.
 2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
