@@ -1,0 +1,42 @@
+{
+  "verificationId": "ver_stop_0003",
+  "createdAt": "2026-08-14T12:10:00Z",
+  "plate": "XYZ789",
+  "verdict": "STOP",
+  "riskScore": 91,
+  "headline": "No avances: el vehículo tiene una orden de captura.",
+  "summary": "Existe una orden de captura vigente. Comprarlo puede traerte problemas legales serios.",
+  "flags": [
+    {
+      "code": "CAPTURE_ORDER",
+      "severity": "critical",
+      "title": "Orden de captura vigente",
+      "detail": "Registrada en SAT Lima.",
+      "source": "SAT_LIMA"
+    },
+    {
+      "code": "HIGH_DEBT",
+      "severity": "critical",
+      "title": "Deuda alta",
+      "detail": "S/ 6,200 en tributos vehiculares.",
+      "source": "SAT_LIMA"
+    },
+    {
+      "code": "SEVERE_INFRACTION",
+      "severity": "warning",
+      "title": "Infracción grave",
+      "detail": "1 papeleta grave sin pagar.",
+      "source": "SUTRAN"
+    }
+  ],
+  "vehicle": {},
+  "seller": null,
+  "appraisal": null,
+  "confidence": {
+    "verifiedSources": 6,
+    "totalSources": 6,
+    "capped": false
+  },
+  "reportUrl": "https://autodata.pe/r/ver_stop_0003",
+  "disclaimer": "Datos de fuentes oficiales al momento de la consulta. No constituye asesoría legal."
+}

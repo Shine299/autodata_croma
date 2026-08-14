@@ -64,4 +64,18 @@ uv sync                     # o: pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+> ⚠️ **Instala siempre las dependencias antes de correr o testear.** Un `.venv` sin
+> `pip install -r requirements.txt` no importa `app.main` (falta `fastapi`) ni colecta los
+> tests que usan `sqlalchemy`.
+
+### Verificar que arranca
+
+```bash
+pytest -q                                   # la suite completa debe pasar en verde (mock, sin cuota)
+uvicorn app.main:app --reload               # /api/v1/health y /api/v1/quota responden 200
+```
+
+`/api/v1/health` y `/api/v1/quota` degradan con gracia si la base de datos no responde
+(devuelven 200 con un campo `database: error: ...`), nunca un stacktrace.
+
 Ver [`04-PLAN-TECNICO.md`](./04-PLAN-TECNICO.md) para el detalle.

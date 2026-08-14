@@ -16,7 +16,7 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 | A-01 | Crear repo, estructura de carpetas de `04-PLAN-TECNICO.md`, `.env.example`, README | P1 | — | `git clone` + `uvicorn app.main:app` levanta y `/api/v1/health` responde 200 |
 | A-02 | Definir **todos** los schemas Pydantic según `03-API-DESIGN.md` | P1 | A-01 | `/docs` de FastAPI muestra los 7 recursos con sus schemas exactos |
 | A-03 | Proyecto Supabase + correr el DDL de las 5 tablas | P4 | — | Las tablas existen y se pueden insertar filas desde el dashboard |
-| A-04 | Crear el bot en @BotFather, obtener token, `/start` responde "hola" | P3 | — | Se puede escribir al bot desde el celular y contesta |
+| ✅ A-04 | Crear el bot en @BotFather, obtener token, `/start` responde "hola" | P3 | — | Se puede escribir al bot desde el celular y contesta |
 | A-05 | Obtener `CROMA_API_KEY` en platform.usecroma.com y repartirla por canal privado | P1 | — | Todos tienen la key en su `.env` local |
 | A-06 | Probar **manualmente** con curl 1 endpoint de Croma y guardar el JSON crudo | P1 | A-05 | `fixtures/sbs_sample.json` existe. Consumo anotado en `docs/quota-log.md` |
 | A-07 | Leer los 6 docs de contexto y armar el prompt base para los agentes | P5 | — | `08-PROMPTS.md` validado por el equipo |
@@ -27,17 +27,17 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
-| B-01 | `CromaClient` con httpx async, auth, timeout, `SourceResult` | P1 | A-02 | Test unitario con `httpx.MockTransport` en verde |
-| B-02 | **Modo mock**: leer `fixtures/*.json` cuando `CROMA_MODE=mock` | P1 | B-01 | Todo el equipo desarrolla sin gastar cuota. Verificado por P4 |
-| B-03 | Caché read-through contra `croma_cache` con TTL por fuente | P4 | B-01, A-03 | Segunda llamada a la misma placa no toca la red (log lo prueba) |
-| B-04 | Logging de cuota en `quota_log` + tolerancia a headers ausentes | P4 | B-01 | `GET /api/v1/quota` devuelve datos reales |
-| B-05 | Backoff en 429 respetando `Retry-After`, máx. 2 reintentos | P1 | B-01 | Test simula 429 y verifica el reintento |
-| B-06 | Adapter **SBS SOAT** + mapper a `insurance` | P2 | B-02 | Fixture real mapeado a `InsuranceSchema` sin campos nulos inesperados |
-| B-07 | Adapter **APESEG SOAT** + merge con SBS | P2 | B-06 | `hasActiveSoat` correcto en los 4 escenarios sembrados |
-| B-08 | Adapter **SUTRAN** + mapper a `infractions` (incluye `total` PEN y `severeCount`) | P2 | B-02 | Suma de montos coincide con el fixture |
-| B-09 | Adapter **Callao papeletas** + merge en `infractions` | P2 | B-08 | Items del Callao aparecen con `source: "CALLAO"` |
-| B-10 | Adapter **SAT Lima cuenta** (por placa) → `taxDebt` | P2 | B-02 | Deuda total correcta |
-| B-11 | Adapter **SAT Lima capturas** → `captureOrder` | P2 | B-02 | Placa con captura devuelve `hasCaptureOrder: true` |
+| ✅ B-01 | `CromaClient` con httpx async, auth, timeout, `SourceResult` | P1 | A-02 | Test unitario con `httpx.MockTransport` en verde |
+| ✅ B-02 | **Modo mock**: leer `fixtures/*.json` cuando `CROMA_MODE=mock` | P1 | B-01 | Todo el equipo desarrolla sin gastar cuota. Verificado por P4 |
+| ✅ B-03 | Caché read-through contra `croma_cache` con TTL por fuente | P4 | B-01, A-03 | Segunda llamada a la misma placa no toca la red (log lo prueba) |
+| ✅ B-04 | Logging de cuota en `quota_log` + tolerancia a headers ausentes | P4 | B-01 | `GET /api/v1/quota` devuelve datos reales |
+| ✅ B-05 | Backoff en 429 respetando `Retry-After`, máx. 2 reintentos | P1 | B-01 | Test simula 429 y verifica el reintento |
+| ✅ B-06 | Adapter **SBS SOAT** + mapper a `insurance` | P2 | B-02 | Fixture real mapeado a `InsuranceSchema` sin campos nulos inesperados |
+| ✅ B-07 | Adapter **APESEG SOAT** + merge con SBS | P2 | B-06 | `hasActiveSoat` correcto en los 4 escenarios sembrados |
+| ✅ B-08 | Adapter **SUTRAN** + mapper a `infractions` (incluye `total` PEN y `severeCount`) | P2 | B-02 | Suma de montos coincide con el fixture |
+| ✅ B-09 | Adapter **Callao papeletas** + merge en `infractions` | P2 | B-08 | Items del Callao aparecen con `source: "CALLAO"` |
+| ✅ B-10 | Adapter **SAT Lima cuenta** (por placa) → `taxDebt` | P2 | B-02 | Deuda total correcta |
+| ✅ B-11 | Adapter **SAT Lima capturas** → `captureOrder` | P2 | B-02 | Placa con captura devuelve `hasCaptureOrder: true` |
 | B-12 | Adapter **SUNAT** por documento → `taxpayer` + flag `isVehicleTrader` | P4 | B-02 | Detecta correctamente actividad de venta de vehículos |
 | B-13 | Adapter **SAT Lima por DNI/RUC** → `personalDebt` | P4 | B-02 | Devuelve placas relacionadas |
 | B-14 | Ejecución concurrente de las 6 fuentes con `asyncio.gather` | P1 | B-06..B-11 | Latencia total ≈ la fuente más lenta, no la suma |
@@ -49,7 +49,7 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
 | C-01 | `POST /api/v1/vehicles/inspections` | P2 | B-14 | Response idéntico al contrato de `03-API-DESIGN.md` |
-| C-02 | Validación y normalización de placa (`ABC-123`→`ABC123`, motos) | P2 | A-02 | 10 casos de test, incluyendo inválidos → `400 invalid_plate` |
+| ✅ C-02 | Validación y normalización de placa (`ABC-123`→`ABC123`, motos) | P2 | A-02 | 10 casos de test, incluyendo inválidos → `400 invalid_plate` |
 | C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` | P4 | B-12, B-13 | `consent: false` → `400`. Documento enmascarado en el response |
 | C-04 | `scoring_service`: flags, riskScore y verdict con las reglas de la spec | P2 | C-01 | Tabla de 8 casos de test cubre todas las reglas de HU-03 |
 | C-05 | `POST /api/v1/verifications` orquestando vehículo + vendedor + score | P2 | C-01, C-03, C-04 | Los 4 escenarios sembrados devuelven el veredicto esperado |
@@ -66,9 +66,9 @@ Leyenda de estado: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
 
 | ID | Tarea | Dueño | Depende | DoD |
 |---|---|---|---|---|
-| D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | A-04 | Responde en < 2 s |
+| ✅ D-01 | Esqueleto del bot con polling + `/start` + `/ayuda` | P3 | A-04 | Responde en < 2 s |
 | D-02 | Máquina de estados (`IDLE → AWAITING_* → DONE`) persistida en `conversations` | P3 | A-03 | El estado sobrevive a un reinicio del proceso |
-| D-03 | Parser de texto libre: placa, precio ("32 mil", "S/32,000"), DNI | P3 | — | 15 casos de test, incluye "ABC-123 me lo dan a 32 mil" |
+| ✅ D-03 | Parser de texto libre: placa, precio ("32 mil", "S/32,000"), DNI | P3 | — | 15 casos de test, incluye "ABC-123 me lo dan a 32 mil" |
 | D-04 | Llamada del bot a `POST /verifications` y manejo de errores | P3 | C-05, D-02 | Un 502 de la API produce un mensaje amable, no un crash |
 | D-05 | **Mensajes progresivos** por fuente conforme van llegando | P3 | C-09, D-04 | Se ven 4-5 mensajes secuenciales, no un bloque final |
 | D-06 | Formateo del veredicto con emojis de semáforo y jerarquía visual | P3 | D-04 | Legible en pantalla de celular sin hacer scroll horizontal |
