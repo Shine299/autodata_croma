@@ -65,12 +65,48 @@ async def create_verification(
             f"la API respondió {resp.status_code}", status_code=resp.status_code
         )
     if resp.status_code >= 400:
-        # 4xx: error del lado del bot (placa inválida, cuota). No es crash, pero
-        # tampoco hay veredicto: lo tratamos como error amable igual.
+        try:
+            body = resp.json()
+            err_msg = body.get("error", {}).get("message")
+        except ValueError:
+            err_msg = None
+            
+        if err_msg:
+            raise VerificationApiError(err_msg, status_code=resp.status_code)
+            
         raise VerificationApiError(
             f"la API rechazó la consulta ({resp.status_code})",
             status_code=resp.status_code,
         )
+
+    body = resp.json()
+    data = body.get("data") if isinstance(body, dict) else None
+    if not data:
+        raise VerificationApiError("la API devolvió una respuesta vacía")
+    return data
+
+async def create_appraisal(verification_id: str, asking_price: float) -> dict[str, Any]:
+    url = f"{settings.api_base_url}/verifications/{verification_id}/appraisals"
+    payload = {"askingPrice": asking_price, "currency": "PEN", "tone": "cordial"}
+
+    try:
+        async with httpx.AsyncClient(timeout=settings.croma_timeout_seconds) as client:
+            resp = await client.post(url, json=payload)
+    except httpx.RequestError as exc:
+        raise VerificationApiError(f"no se pudo contactar a la API: {exc}") from exc
+
+    if resp.status_code >= 500:
+        raise VerificationApiError(f"la API respondió {resp.status_code}", status_code=resp.status_code)
+    
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+            err_msg = body.get("error", {}).get("message")
+        except ValueError:
+            err_msg = None
+        if err_msg:
+            raise VerificationApiError(err_msg, status_code=resp.status_code)
+        raise VerificationApiError(f"la API rechazó la tasación ({resp.status_code})", status_code=resp.status_code)
 
     body = resp.json()
     data = body.get("data") if isinstance(body, dict) else None

@@ -9,11 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.jobs import job_store
 from app.repositories.verification_repo import VerificationRepository
-from app.schemas.verification import VerificationRequest
+from app.schemas.verification import VerificationRequest, VerificationResponse, Confidence
 from app.schemas.appraisal import AppraisalRequest, AppraisalResponse
 from app.services.vehicles import get_vehicle_inspection
 from app.services.appraisal import calculate_appraisal
 from app.services.plate import normalize_plate
+from app.services.sellers import get_seller_screening
+from app.services.scoring import calculate_score
 
 router = APIRouter(tags=["Verifications"])
 
