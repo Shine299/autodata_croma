@@ -1,81 +1,133 @@
-# AutoData — Hackathon GOV-TECH Croma
+# AutoData
 
-> Verifica el auto **y** al vendedor. Devuelve una decisión y un precio, no un reporte.
+> Verifica el auto **y** al vendedor. Devuelve una decision y un precio, no un reporte.
 
-Deadline de entrega: **16 de agosto, 6:30 p. m.**
-Equipo: 5 personas · Metodología: **SDD (Spec-Driven Development)** sobre **Scrum**
-(3 sprints con puertas de testing), ejecutada de forma híbrida con agentes de IA.
+Bot de Telegram que consulta 6 fuentes oficiales del gobierno peruano (via [Croma](https://usecroma.com)) para verificar vehiculos usados antes de comprar. Emite un veredicto GO / CAUTION / STOP, calcula un precio justo y genera un guion de negociacion.
 
----
-
-## Cómo usar esta documentación
-
-Esta carpeta **es el contexto del proyecto**. Todo agente de IA (Claude Code, Cursor, Copilot)
-debe recibir estos archivos antes de escribir una línea de código. El orden de lectura importa:
-
-| # | Archivo | Para qué sirve | Quién lo lee |
-|---|---------|----------------|--------------|
-| 0 | [`00-CONTEXTO.md`](./00-CONTEXTO.md) | Problema, mercado, competencia, límites duros de Croma | Todos + agentes |
-| 1 | [`01-CONSTITUTION.md`](./01-CONSTITUTION.md) | Reglas no negociables del proyecto (SDD paso 1) | Todos + agentes |
-| 2 | [`02-SPEC.md`](./02-SPEC.md) | QUÉ construimos: historias, criterios de aceptación (SDD paso 2) | Todos + agentes |
-| 3 | [`03-API-DESIGN.md`](./03-API-DESIGN.md) | Contrato de API: recurso → endpoint → request/response | Backend + Bot |
-| 4 | [`04-PLAN-TECNICO.md`](./04-PLAN-TECNICO.md) | CÓMO lo construimos: stack, arquitectura, modelo de datos (SDD paso 3) | Backend + Data |
-| 5 | [`05-TASKS.md`](./05-TASKS.md) | Backlog atómico con IDs, dueños y Definition of Done (SDD paso 4) | Todos |
-| 6 | [`06-PLAN-ACCION.md`](./06-PLAN-ACCION.md) | **Plan Scrum:** 3 sprints, puertas de testing, backlog por participante | Todos |
-| 7 | [`07-AGENTS.md`](./07-AGENTS.md) | Reglas de trabajo híbrido humano ↔ agente de IA | Todos + agentes |
-| 8 | [`08-PROMPTS.md`](./08-PROMPTS.md) | Prompts del producto (el bot) + prompts de desarrollo | Bot + todos |
-| 9 | [`09-DEMO-PITCH.md`](./09-DEMO-PITCH.md) | Guion de la demo de 3 minutos y checklist de entrega | Producto |
-| 10 | [`10-LIBRERIA-PROMPTS.md`](./10-LIBRERIA-PROMPTS.md) | **12 prompts de ceremonia:** planning, daily, cierre de tarde, puertas, retro | Scrum Master + todos |
+Proyecto de hackathon GOV-TECH Croma 2026.
 
 ---
 
-## Ritmo del proyecto
+## Arquitectura
 
 ```
-Sprint 0        Sprint 1          🚦     Sprint 2          🚦     Sprint 3        🚦
-Alineamiento →  Los datos      Puerta →  El producto    Puerta →  Listo para   Puerta → Entrega
-   2 h          entran (8 h)     1        decide (8 h)     2       usarse (6 h)   3
+Telegram Bot (@autodata_peru_bot)
+        |
+   FastAPI (async)
+        |
+   CromaClient (httpx)  -->  Cache (Supabase/SQLite)
+        |
+   6 fuentes Croma Peru:
+     - SBS SOAT (siniestros)
+     - APESEG SOAT (poliza vigente)
+     - SUTRAN (papeletas nacionales)
+     - Callao (papeletas Callao)
+     - SAT Lima cuenta (deuda tributaria)
+     - SAT Lima capturas (orden de captura)
+        |
+   Scoring Engine  -->  Verdict: GO / CAUTION / STOP
+        |
+   Appraisal Engine  -->  Precio justo + guion de negociacion
 ```
 
-Cada participante mantiene su dominio durante los 3 sprints, cambiando de foco en cada uno.
-**Ningún sprint arranca hasta que la puerta anterior cierre en verde.** Ver `06-PLAN-ACCION.md`.
+## Stack
 
-El prompt **P-03 (cierre de tarde)** de `10-LIBRERIA-PROMPTS.md` es la rutina que sostiene
-todo esto: se ejecuta cada tarde y produce el plan del día siguiente por fase, sprint y persona.
+- Python 3.11+
+- FastAPI + uvicorn
+- httpx (async HTTP)
+- Pydantic v2 + pydantic-settings
+- python-telegram-bot v21
+- SQLAlchemy async + asyncpg/aiosqlite
+- pytest + pytest-asyncio
 
----
-
-## Regla de oro del proyecto
-
-> **Si no está en la spec, no se codea. Si se codea algo nuevo, primero se actualiza la spec.**
-
-Los agentes de IA generan código rápido pero divergente. La spec es la única fuente de verdad
-que mantiene a 5 personas y N agentes construyendo la misma cosa.
-
----
-
-## Arranque rápido
+## Arranque rapido
 
 ```bash
-git clone <repo> && cd autodata
-cp .env.example .env        # pedir CROMA_API_KEY y TELEGRAM_BOT_TOKEN al Tech Lead
-docker compose up -d        # postgres local (o usar Supabase directo)
-uv sync                     # o: pip install -r requirements.txt
-uvicorn app.main:app --reload
+git clone <repo> && cd autodata_croma
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # llenar las variables (ver tabla abajo)
+uvicorn app.main:app --reload --port 8080
 ```
 
-> ⚠️ **Instala siempre las dependencias antes de correr o testear.** Un `.venv` sin
-> `pip install -r requirements.txt` no importa `app.main` (falta `fastapi`) ni colecta los
-> tests que usan `sqlalchemy`.
+Verificar: `curl http://localhost:8080/api/v1/health` debe responder `200`.
 
-### Verificar que arranca
+## Variables de entorno
+
+| Variable | Requerida | Default | Descripcion |
+|----------|-----------|---------|-------------|
+| `CROMA_API_KEY` | Si | — | API key de platform.usecroma.com |
+| `CROMA_BASE_URL` | No | `https://api.croma.run` | URL base de Croma |
+| `CROMA_MODE` | No | `mock` | `mock` lee de `fixtures/`, `live` consulta Croma real |
+| `CROMA_TIMEOUT_SECONDS` | No | `40` | Timeout por request a Croma |
+| `TELEGRAM_BOT_TOKEN` | Si* | — | Token de @BotFather (*solo si corres el bot) |
+| `TELEGRAM_MODE` | No | `polling` | Modo del bot |
+| `SUPABASE_URL` | No | — | URL del proyecto Supabase |
+| `SUPABASE_KEY` | No | — | Key del proyecto Supabase |
+| `DATABASE_URL` | No | — | Connection string PostgreSQL |
+| `APP_ENV` | No | `dev` | Entorno de ejecucion |
+| `PUBLIC_BASE_URL` | No | `http://localhost:8080` | URL publica del servicio |
+| `INTERNAL_API_KEY` | No | — | Key para endpoints internos |
+
+## Modo mock vs live
+
+Por defecto `CROMA_MODE=mock` — lee respuestas de `fixtures/` sin consumir cuota. Usa este modo para desarrollo y tests.
+
+`CROMA_MODE=live` consulta la API real de Croma. Cuota limitada: 100 requests/dia para todo el equipo (~16 verificaciones). Cada verificacion consulta 6 fuentes.
+
+## Endpoints
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/v1/health` | Health check |
+| GET | `/api/v1/quota` | Cuota diaria de Croma |
+| POST | `/api/v1/verifications` | Verificacion vehicular completa |
+| POST | `/api/v1/verifications/{id}/appraisals` | Tasacion y guion de negociacion |
+
+### Ejemplo: verificacion
 
 ```bash
-pytest -q                                   # la suite completa debe pasar en verde (mock, sin cuota)
-uvicorn app.main:app --reload               # /api/v1/health y /api/v1/quota responden 200
+curl -X POST http://localhost:8080/api/v1/verifications \
+  -H "Content-Type: application/json" \
+  -d '{"plate": "ABC123"}'
 ```
 
-`/api/v1/health` y `/api/v1/quota` degradan con gracia si la base de datos no responde
-(devuelven 200 con un campo `database: error: ...`), nunca un stacktrace.
+## Tests
 
-Ver [`04-PLAN-TECNICO.md`](./04-PLAN-TECNICO.md) para el detalle.
+```bash
+pytest -v
+```
+
+Los tests corren en modo mock (no consumen cuota).
+
+## Estructura del proyecto
+
+```
+app/
+  main.py              # FastAPI app
+  config.py            # Settings (pydantic-settings)
+  api/                 # Endpoints (health, quota, verifications)
+  bot/                 # Telegram bot (handlers, parsers)
+  integrations/croma/  # CromaClient + adapters por fuente
+  services/            # Scoring, appraisal, plate validation
+  schemas/             # Modelos Pydantic (contrato de API)
+  repositories/        # Cache, quota log (Supabase/SQLite)
+fixtures/              # Respuestas mock de Croma
+  demo/                # 4 escenarios de demo congelados
+tests/                 # pytest
+files/                 # Documentacion del proyecto
+```
+
+## Escenarios de demo
+
+| Placa | Escenario | Verdict esperado |
+|-------|-----------|------------------|
+| D0H-741 | Auto limpio, SOAT vigente | GO |
+| DEF-456 | 3 siniestros SOAT | CAUTION |
+| GHI-789 | Deuda alta + SOAT vencido | CAUTION |
+| JKL-012 | Orden de captura vigente | STOP |
+| *(live)* | Placa consultada en vivo ante el jurado | Lo que devuelva Croma |
+
+## Equipo
+
+Hackathon GOV-TECH Croma 2026 — 5 personas, 36 horas.

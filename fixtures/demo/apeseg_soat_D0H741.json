@@ -1,0 +1,36 @@
+{
+  "found": true,
+  "plate": "D0H-741",
+  "has_active_soat": true,
+  "active": {
+    "company": "La Positiva",
+    "status": "VIGENTE",
+    "start_date": "2025-11-05",
+    "end_date": "2026-11-05",
+    "policy_number": "000142242589000000000000",
+    "vehicle_use": "CARGA/TRANSPORTE",
+    "vehicle_class": "CAMIONETA PICK UP",
+    "certificate_type": "DIGITAL",
+    "brand": null,
+    "model": null,
+    "created_date": "2025-11-05",
+    "annulled_date": null
+  },
+  "count": 6,
+  "certificates": [
+    {
+      "company": "La Positiva",
+      "status": "VIGENTE",
+      "start_date": "2025-11-05",
+      "end_date": "2026-11-05",
+      "policy_number": "000142242589000000000000",
+      "vehicle_use": "CARGA/TRANSPORTE",
+      "vehicle_class": "CAMIONETA PICK UP",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2025-11-05",
+      "annulled_date": null
+    }
+  ]
+}

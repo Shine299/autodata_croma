@@ -1,0 +1,11 @@
+{
+  "found": true,
+  "plate": "D0H-741",
+  "has_infractions": false,
+  "count": 0,
+  "message": "No se encontraron infracciones pendientes",
+  "report_date": null,
+  "currency": "PEN",
+  "total": 0,
+  "infractions": []
+}

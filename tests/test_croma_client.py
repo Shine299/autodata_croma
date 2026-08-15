@@ -135,3 +135,22 @@ async def test_http_error_returns_error_result(live_settings):
     assert result.status == "error"
     assert result.error == "http_500"
     await client.close()
+
+
+@pytest.mark.asyncio
+async def test_mock_demo_fixture_takes_priority(mock_settings, tmp_path):
+    demo_dir = tmp_path / "demo"
+    demo_dir.mkdir()
+    demo_fixture = {"plate": "ABC123", "from": "demo"}
+    root_fixture = {"plate": "ABC123", "from": "root"}
+    (demo_dir / "sbs_ABC123.json").write_text(json.dumps(demo_fixture))
+    (tmp_path / "sbs_ABC123.json").write_text(json.dumps(root_fixture))
+
+    with patch("app.integrations.croma.client.FIXTURES_DIR", tmp_path), \
+         patch("app.integrations.croma.client.DEMO_DIR", demo_dir):
+        client = CromaClient()
+        result = await client.call("SBS", "/pe/sbs/soat/v1", {"plate": "ABC123"})
+
+    assert result.status == "ok"
+    assert result.data["from"] == "demo"
+    await client.close()

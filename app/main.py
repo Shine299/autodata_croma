@@ -1,6 +1,7 @@
 import logging
+import uuid
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -10,14 +11,45 @@ from app.api.jobs import router as jobs_router
 from app.api.quota import router as quota_router
 from app.api.sellers import router as sellers_router
 from app.api.verifications import router as verifications_router
+from app.core.logging import ObservabilityMiddleware
 from app.web.routes import router as web_router
 from app.schemas.common import ErrorDetail, ErrorEnvelope
 
 logger = logging.getLogger("autodata.main")
 
-app = FastAPI(title="AutoData", version="0.1.0")
+app = FastAPI(
+    title="AutoData API",
+    description="Plataforma de verificación vehicular y screening de vendedor para Perú vía Croma",
+    version="0.1.0",
+)
 
-# --- Routers --------------------------------------------------------------
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {
+            "type": "client_error" if exc.status_code < 500 else "server_error",
+            "code": str(exc.detail) if isinstance(exc.detail, str) else "error",
+            "message": str(exc.detail),
+            "requestId": str(uuid.uuid4()),
+        }},
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": {
+            "type": "server_error",
+            "code": "internal_error",
+            "message": "Error interno del servidor",
+            "requestId": str(uuid.uuid4()),
+        }},
+    )
+
+
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(quota_router, prefix="/api/v1")

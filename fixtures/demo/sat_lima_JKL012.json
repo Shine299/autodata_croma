@@ -1,0 +1,30 @@
+{
+  "found": true,
+  "plate": "JKL-012",
+  "has_debt": true,
+  "currency": "PEN",
+  "total": 4100.0,
+  "items": [
+    {
+      "group": "IMPUESTO VEHICULAR",
+      "reference": "2023-0",
+      "amount": 1200.0,
+      "status": "PENDIENTE",
+      "due_date": "2023-12-31"
+    },
+    {
+      "group": "IMPUESTO VEHICULAR",
+      "reference": "2024-0",
+      "amount": 1400.0,
+      "status": "PENDIENTE",
+      "due_date": "2024-12-31"
+    },
+    {
+      "group": "MULTA ADMINISTRATIVA",
+      "reference": "2025-00456",
+      "amount": 1500.0,
+      "status": "PENDIENTE",
+      "due_date": "2025-06-30"
+    }
+  ]
+}
