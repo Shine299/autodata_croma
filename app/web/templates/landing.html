@@ -39,6 +39,30 @@
     .lede { letter-spacing: -0.011em; line-height: 1.5; }
     .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
 
+    /* ── Encabezado de sección ─────────────────────────────────────────
+       El número es el ancla visual (verde, el único acento de la línea) y
+       la regla horizontal da ritmo al hacer scroll. Antes número y etiqueta
+       tenían el mismo peso, así que ninguno anclaba. */
+    .kicker { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+    .kicker-num {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .8125rem; color: var(--em); font-variant-numeric: tabular-nums;
+    }
+    .kicker-rule { height: 1px; width: 2rem; background: var(--line); flex: none; }
+    .kicker-label {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .6875rem; letter-spacing: .14em; color: var(--ink-2); text-transform: uppercase;
+    }
+
+    /* Ítem de lista con marca en vez de número: evita chocar con la numeración
+       de las secciones (había dos sistemas 01–04 distintos en la misma página). */
+    .mark {
+      flex: none; width: 1.375rem; height: 1.375rem; border-radius: .4375rem;
+      display: grid; place-content: center; font-size: .75rem; margin-top: .125rem;
+    }
+    .mark-no { background: #fff1f2; color: #e11d48; }
+    .mark-go { background: #ecfdf5; color: var(--em); }
+
     /* ── Grano sutil: le quita el plano de "CSS puro" ── */
     .grain::after {
       content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .035;
@@ -323,7 +347,11 @@
   <section id="problema" class="scroll-mt-20 max-w-[76rem] mx-auto px-6 py-28">
     <div class="grid lg:grid-cols-[.85fr_1.15fr] gap-14">
       <div class="rv">
-        <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">01 — EL PROBLEMA</p>
+        <div class="kicker">
+          <span class="kicker-num">01</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">El problema</span>
+        </div>
         <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">
           Nadie paga por datos.<br>Pagan por no usar<br>veinte portales.
         </h2>
@@ -335,18 +363,22 @@
           <span class="text-[--ink] font-medium">no hace la verificación</span> — o paga para que otro la haga.
         </p>
 
-        <div class="mt-10 grid sm:grid-cols-3 gap-px bg-[--line] rounded-2xl overflow-hidden border border-[--line]">
-          <div class="bg-white p-6">
-            <p class="display text-[2.5rem]">35</p>
-            <p class="text-[.8125rem] text-[--ink-2] mt-2 leading-snug">enlaces tiene la "consulta gratuita" más buscada. Tú haces los clics.</p>
+        <!-- Las cifras cuentan una historia en 3 tiempos: el costo en clics, el
+             costo en soles, y el remate — lo que pedimos nosotros. La tercera se
+             destaca a propósito: es la única que resuelve, no la que describe. -->
+        <div class="mt-10 grid sm:grid-cols-3 gap-3">
+          <div class="rounded-2xl border border-[--line] bg-white p-6">
+            <p class="display text-[2.75rem] tabular-nums">35</p>
+            <p class="text-[.8125rem] text-[--ink-2] mt-2.5 leading-snug">enlaces tiene la "consulta gratuita" más buscada. Tú haces los clics.</p>
           </div>
-          <div class="bg-white p-6">
-            <p class="display text-[2.5rem]">S/35</p>
-            <p class="text-[.8125rem] text-[--ink-2] mt-2 leading-snug">cobran por WhatsApp para hacer esos clics por ti.</p>
+          <div class="rounded-2xl border border-[--line] bg-white p-6">
+            <p class="display text-[2.75rem] tabular-nums">S/35</p>
+            <p class="text-[.8125rem] text-[--ink-2] mt-2.5 leading-snug">cobran por WhatsApp para hacer esos clics por ti.</p>
           </div>
-          <div class="bg-white p-6">
-            <p class="display text-[2.5rem] text-[--em]">1</p>
-            <p class="text-[.8125rem] text-[--ink-2] mt-2 leading-snug">mensaje pedimos nosotros. La placa, y listo.</p>
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 relative">
+            <span class="mono text-[.625rem] tracking-[.14em] text-[--em] absolute top-4 right-4">AUTODATA</span>
+            <p class="display text-[2.75rem] tabular-nums text-[--em]">1</p>
+            <p class="text-[.8125rem] text-emerald-800/80 mt-2.5 leading-snug">mensaje pedimos nosotros. La placa, y listo.</p>
           </div>
         </div>
       </div>
@@ -357,7 +389,11 @@
   <section id="producto" class="scroll-mt-20 bg-[--paper] border-y border-[--line] py-28">
     <div class="max-w-[76rem] mx-auto px-6">
       <div class="rv max-w-[38rem] mb-14">
-        <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">02 — QUÉ HACE</p>
+        <div class="kicker">
+          <span class="kicker-num">02</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Qué hace</span>
+        </div>
         <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Tres cosas que nadie te da juntas.</h2>
       </div>
 
@@ -423,9 +459,13 @@
   </section>
 
   <!-- Demo -->
-  <section id="demo" class="scroll-mt-20 max-w-[64rem] mx-auto px-6 py-28">
+  <section id="demo" class="scroll-mt-20 max-w-[76rem] mx-auto px-6 py-28">
     <div class="rv max-w-[38rem] mb-12">
-      <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">03 — CÓMO SE USA</p>
+      <div class="kicker">
+          <span class="kicker-num">03</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Cómo se usa</span>
+        </div>
       <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Escribes como hablas.</h2>
       <p class="lede text-[1.0625rem] text-[--ink-2] mt-4">Sin formularios. Sin captchas. Un mensaje.</p>
     </div>
@@ -475,7 +515,11 @@
   <section id="limites" class="border-t border-[--line] py-28 scroll-mt-20">
     <div class="max-w-[76rem] mx-auto px-6">
       <div class="rv max-w-[38rem] mb-14">
-        <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">04 — LÍMITES Y ROADMAP</p>
+        <div class="kicker">
+          <span class="kicker-num">04</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Límites y roadmap</span>
+        </div>
         <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Lo que <span class="text-rose-500">no</span> hacemos — y qué sigue.</h2>
         <p class="lede text-[1.0625rem] text-[--ink-2] mt-5">
           Preferimos un producto honesto a uno que promete de más. Todo esto se lo decimos
@@ -487,19 +531,19 @@
         <div class="rv">
           <p class="mono text-[.6875rem] tracking-[.14em] text-rose-500 mb-5">LÍMITES CONOCIDOS</p>
           <ul class="divide-y divide-[--line] border-y border-[--line]">
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">01</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin SUNARP.</span> No damos cadena de propietarios, gravámenes ni reportes de robo. Croma no lo expone y SUNARP tiene captcha.</p></li>
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">02</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin MTC.</span> No tenemos revisión técnica vigente.</p></li>
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">03</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No reemplaza al mecánico.</span> Verificamos papeles y señales de riesgo, no el estado físico.</p></li>
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">04</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No damos asesoría legal.</span> Mostramos datos oficiales; la decisión es tuya.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin SUNARP.</span> No damos cadena de propietarios, gravámenes ni reportes de robo. Croma no lo expone y SUNARP tiene captcha.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin MTC.</span> No tenemos revisión técnica vigente.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No reemplaza al mecánico.</span> Verificamos papeles y señales de riesgo, no el estado físico.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No damos asesoría legal.</span> Mostramos datos oficiales; la decisión es tuya.</p></li>
           </ul>
         </div>
 
         <div class="rv" data-d="1">
           <p class="mono text-[.6875rem] tracking-[.14em] text-[--em] mb-5">ROADMAP</p>
           <ol class="divide-y divide-[--line] border-y border-[--line]">
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">01</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">SUNARP y MTC</span> en cuanto Croma los exponga. La arquitectura de adapters ya está lista: es agregar una fuente, no rehacer el producto.</p></li>
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">02</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sello verificado con QR</span> para avisos de Marketplace. Cada aviso con el sello es distribución gratuita.</p></li>
-            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">03</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">API para concesionarias.</span> Ellas pagan, el comprador ve el reporte gratis. Quien compra un auto cada cinco años no debería ser el que paga.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">SUNARP y MTC</span> en cuanto Croma los exponga. La arquitectura de adapters ya está lista: es agregar una fuente, no rehacer el producto.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sello verificado con QR</span> para avisos de Marketplace. Cada aviso con el sello es distribución gratuita.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">API para concesionarias.</span> Ellas pagan, el comprador ve el reporte gratis. Quien compra un auto cada cinco años no debería ser el que paga.</p></li>
           </ol>
         </div>
       </div>
