@@ -1,0 +1,35 @@
+{
+  "found": true,
+  "plate": "GHI-789",
+  "has_infractions": true,
+  "count": 3,
+  "report_date": "2026-08-14",
+  "currency": "PEN",
+  "total": 2340,
+  "infractions": [
+    {
+      "document_number": "E11-2025-00234567",
+      "document_type": "PAPELETA",
+      "date": "2025-11-20",
+      "infraction_code": "M.1",
+      "classification": "MUY GRAVE",
+      "amount": 1240
+    },
+    {
+      "document_number": "E11-2025-00198432",
+      "document_type": "PAPELETA",
+      "date": "2025-07-03",
+      "infraction_code": "G.57",
+      "classification": "GRAVE",
+      "amount": 600
+    },
+    {
+      "document_number": "E11-2024-00145678",
+      "document_type": "PAPELETA",
+      "date": "2024-12-15",
+      "infraction_code": "G.12",
+      "classification": "GRAVE",
+      "amount": 500
+    }
+  ]
+}

@@ -12,6 +12,7 @@ from app.config import settings
 from app.integrations.croma.models import SourceResult
 
 FIXTURES_DIR = Path(__file__).resolve().parents[3] / "fixtures"
+DEMO_DIR = FIXTURES_DIR / "demo"
 MAX_RETRIES = 2
 
 
@@ -198,9 +199,12 @@ class CromaClient:
     def _mock_call(self, source: str, body: dict) -> SourceResult:
         # ponytail: linear scan of fixtures dir, glob if fixtures grow past ~50
         lookup = body.get("plate") or body.get("document_number") or "default"
-        fixture_path = FIXTURES_DIR / f"{source.lower()}_{lookup}.json"
+        source_lower = source.lower()
+        fixture_path = DEMO_DIR / f"{source_lower}_{lookup}.json"
         if not fixture_path.exists():
-            fixture_path = FIXTURES_DIR / f"{source.lower()}_sample.json"
+            fixture_path = FIXTURES_DIR / f"{source_lower}_{lookup}.json"
+        if not fixture_path.exists():
+            fixture_path = FIXTURES_DIR / f"{source_lower}_sample.json"
         if not fixture_path.exists():
             return SourceResult(source=source, status="not_found", from_cache=True)
         data = json.loads(fixture_path.read_text())

@@ -5,15 +5,15 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `sprint1-arroz`
-**Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P2 cerró C-04, C-05, C-06)
+**Rama activa:** `joaquin-p1-sprint3`
+**Sprint actual:** Sprint 3 — "Listo para usarse"
+**Última actualización:** 2026-08-14 (P1 cerró E-03, E-07)
 
 ---
 
-## Sprint 1 — Estado de tareas
+## Sprint 3 — Estado de tareas
 
-### Completado
+### Completado por P4 (Data / Infra / Deploy / Observabilidad)
 
 | ID | Tarea | Dueño | Archivos |
 |----|-------|-------|----------|
@@ -46,6 +46,9 @@
 | C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
 | C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
 
+| E-03 | Sembrar 5 placas en live y congelar fixtures | P1 | `fixtures/demo/` (24 archivos), `docs/quota-log.md`, `app/integrations/croma/client.py` |
+| E-07 | README publico del repo | P1 | `README.md` reescrito para terceros |
+
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
@@ -62,49 +65,59 @@
 
 ---
 
-## Avisos / handoffs entre roles
+## Sprint 2 — Estado de tareas
 
-**→ P1 / P3 (de P2):** Validación de placa (**C-02**) y los 6 adapters vehiculares (**B-06..B-11**) listos y testeados (35 tests verdes).
-- Código de normalización: `app/services/plate.py` — funciones `normalize_plate(plate)` y `is_valid_plate(plate)`.
-- Adapters y mergers: `app/integrations/croma/sources/` (`sbs.py`, `apeseg.py`, `sutran.py`, `callao.py`, `sat_debt.py`, `sat_captures.py`).
-- Tests: `tests/test_plate.py`, `tests/test_adapters_insurance.py`, `tests/test_adapters_infractions.py`, `tests/test_adapters_sat.py`.
-- **Acción para P1:** Ya puedes implementar **B-14** (concurrencia de 6 fuentes con `asyncio.gather`) consumiendo estos mappers.
-- **Acción para P3:** En la **Puerta 1** puedes verificar que las 6 fuentes mapean y responden contra `SourceResult`.
+### Completado
 
-**→ P1 / P3 / P4 / P5 (de P2):** Orquestación y reglas de negocio cerradas (**C-04, C-05, C-06**).
-- **Acción para P3:** Ya puedes implementar **D-04** y **D-09** consumiendo los endpoints `POST /api/v1/verifications` y `POST /verifications/{id}/appraisals`.
-- **Acción para P5:** El schema de tasación ya retorna el `negotiationScript` (C-07).
-- **Acción para P4:** Cuando tengas **C-03** listo, reemplaza el mock en `app/services/sellers.py`.
-- **Acción para P1:** Cuando tengas **C-01** listo, reemplaza el mock en `app/services/vehicles.py`.
-
-
-**Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
-
----
-
-## Cómo correr el bot (P3)
-
-Desde la raíz del repo, en PowerShell:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.bot.main
-```
-
-Requiere `TELEGRAM_BOT_TOKEN` en `.env` (A-04). Corre en modo polling; se detiene con `Ctrl+C`.
-El `!` que usa Claude Code **no** va en PowerShell normal.
+| ID | Tarea | Dueño | Archivos |
+|----|-------|-------|----------|
+| B-12 | Adapter **SUNAT** por documento → `taxpayer` + detector `isVehicleTrader` | P4 | `app/integrations/croma/sources/sunat.py`, `fixtures/sunat_sample.json`, `fixtures/sunat_20100100101.json` |
+| B-13 | Adapter **SAT Lima por DNI/RUC** → `personalDebt` + placas relacionadas | P4 | `app/integrations/croma/sources/sat_seller.py`, `fixtures/sat_seller_sample.json`, `fixtures/sat_seller_clean.json` |
+| C-03 | `POST /api/v1/sellers/screenings` + validación de `consent` (Art. VI) + enmascarado | P4 | `app/services/seller.py`, `app/api/sellers.py`, `app/main.py` |
+| C-08 | `GET /api/v1/verifications/{id}` desde Supabase/DB + hashing ético de documento | P4 | `app/repositories/verification_repo.py`, `app/api/verifications.py`, `app/main.py` |
+| D-02 | Máquina de estados (`IDLE→AWAITING_*→DONE`) persistida en `conversations` | P3 | `app/bot/states.py`, `app/repositories/conversation_repo.py`, `app/bot/handlers.py` |
+| D-04 | Bot llama a `POST /verifications` por HTTP con manejo de errores (502 amable) | P3 | `app/bot/api_client.py`, `app/bot/handlers.py` |
+| D-05 | Mensajes progresivos por fuente (polling `/jobs/{id}`) | P3 | `app/bot/job_client.py`, `app/bot/handlers.py` |
+| D-06 | Formateo del veredicto con semáforo (🟢🟡🔴) | P3 | `app/bot/formatters.py` |
+| D-07 | 4 botones inline bajo el veredicto | P3 | `app/bot/keyboards.py`, `handlers.py` |
+| C-04 | `scoring_service`: flags, riskScore y verdict | P2 | `app/services/scoring.py` |
+| C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py` |
+| C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py` |
+| E-01 | Página web de reporte `/r/{id}` | P5 | `app/web/templates/report.html`, `app/web/routes.py` |
 
 ---
 
-## Decisiones tecnicas ya tomadas
+## Sprint 1 — Estado de tareas
 
-1. **Modo mock por default** — `CROMA_MODE=mock` en `.env`. Nadie gasta cuota sin autorizacion de P1.
-2. **Schemas congelados** — `app/schemas/` solo los toca P1. Son el contrato de `03-API-DESIGN.md`.
-3. **CromaClient ya existe** — Usar `app/integrations/croma/client.py`, no crear otro cliente HTTP. Interfaz: `await client.call(source, path, body, cache_key=..., ttl=...)` → `SourceResult`.
-4. **`SourceResult` es dataclass** — en `app/integrations/croma/models.py`. Campos: `source, status, data, error, latency_ms, from_cache`.
-5. **Fixtures por nombre** — patron: `fixtures/{source}_{lookup}.json` o `fixtures/{source}_sample.json` como fallback.
-6. **Config en `app/config.py`** — `from app.config import settings`. Pydantic-settings lee de `.env`.
-7. **FastAPI + httpx + python-telegram-bot v21** — stack definido, no agregar dependencias nuevas sin justificacion.
-8. **Cuota limitada** — 100 requests/dia para TODO el equipo. ~5-6 requests por verificacion = ~16 verificaciones/dia max.
+### Completado
+
+| ID | Tarea | Dueño | Archivos |
+|----|-------|-------|----------|
+| A-01 | Estructura de carpetas, FastAPI, `/api/v1/health` → 200 | P1 | `app/main.py`, `app/api/health.py` |
+| A-02 | Schemas Pydantic (7 recursos completos) | P1 | `app/schemas/` |
+| A-05 | `.env.example` con todas las variables | P1 | `.env.example` |
+| B-01 | `CromaClient` con httpx async, auth, timeout 40s | P1 | `app/integrations/croma/client.py` |
+| B-02 | Modo mock: lee `fixtures/*.json` cuando `CROMA_MODE=mock` | P1 | `_mock_call()` en client.py |
+| A-06 | 1 fixture real de Croma (3 fuentes) | P1 | `fixtures/sutran_sample.json`, `apeseg_soat_sample.json`, `sbs_soat_sample.json` |
+| B-05 | Backoff en 429 con `Retry-After`, máx 2 reintentos | P1 | Tests en `tests/test_croma_client.py` |
+| A-03 | Proyecto Supabase + DDL de las 5 tablas | P4 | `migrations/schema.sql`, `app/core/database.py`, `app/repositories/models.py` |
+| A-04 | Bot @autodata_peru_bot creado | P3 | Token en `.env` local |
+| D-01 | Esqueleto del bot: polling + `/start` + `/ayuda` | P3 | `app/bot/main.py`, `app/bot/handlers.py` |
+| D-03 | Parser de texto libre: placa, precio, DNI | P3 | `app/bot/parsers.py` |
+| B-03 | Cache read-through contra `croma_cache` con TTL | P4 | `app/repositories/cache_repo.py` |
+| B-04 | Logging de cuota en tabla `quota_log` | P4 | `app/repositories/quota_repo.py` |
+| C-11 | `GET /api/v1/quota` con datos reales | P4 | `app/api/quota.py` |
+
+---
+
+## Verificación de cierre (Sprint 3 — P4) — 2026-08-14
+
+- ✅ **Suite completa: 151/151 tests en verde** (`pytest`).
+- ✅ Archivos de despliegue listos (`Dockerfile`, `docker-compose.yml`, `Procfile`, `railway.json`, `render.yaml`).
+- ✅ Telemetría y observabilidad activas en todos los endpoints HTTP.
+- ✅ `/api/v1/health` con payload enriquecido (uptime, versión, environment, database status).
+
+---
 
 ## Regla de dueño por carpeta
 
@@ -113,37 +126,5 @@ El `!` que usa Claude Code **no** va en PowerShell normal.
 | P1 | `app/integrations/`, `app/core/`, `app/config.py`, `fixtures/`, `app/schemas/` |
 | P2 | `app/services/`, `app/api/vehicles.py`, `app/api/verifications.py` |
 | P3 | `app/bot/` |
-| P4 | `app/repositories/`, `app/api/sellers.py`, `app/api/health.py`, migraciones |
+| P4 | `app/repositories/`, `app/api/sellers.py`, `app/api/health.py`, migraciones, infra/deploy |
 | P5 | `app/web/`, `docs/`, textos y copy |
-
-**No tocar carpetas de otro dueño sin coordinarse.**
-
----
-
-## Que viene despues (Sprint 2 — "El producto decide")
-
-> NO implementar Sprint 2 hasta que Puerta 1 cierre en verde.
-
-Sprint 2 agrega: orquestacion concurrente (B-14), scoring/veredicto (C-04), endpoint de verificacion completa (C-05), tasacion (C-06), flujo conversacional del bot (D-02, D-04-D-07), verificacion de vendedor (B-12, B-13, C-03), pagina web del reporte (E-01).
-
----
-
-## Reglas para agentes de IA
-
-1. **Leer `files/00-CONTEXTO.md` a `files/04-PLAN-TECNICO.md`** antes de implementar.
-2. **Respetar el contrato de API** de `files/03-API-DESIGN.md` — es ley.
-3. **Nunca usar `CROMA_MODE=live`** sin autorizacion explicita de P1.
-4. **Respetar dueño de carpeta** — ver tabla arriba.
-5. **No agregar dependencias** sin justificacion. El `requirements.txt` actual basta para Sprint 1.
-6. **Tests obligatorios** para logica no trivial. Usar `pytest` + `pytest-asyncio`.
-7. **No crear archivos `.md` de documentacion** extra. Este archivo y `files/` son suficientes.
-8. **Modo mock es el default** — todo desarrollo se hace sin tocar la red.
-
----
-
-## Como actualizar este archivo
-
-Cada vez que cierres una tarea:
-1. Mueve la fila de "Pendiente" a "Completado" con los archivos creados/modificados.
-2. Actualiza la fecha de "Ultima actualizacion".
-3. Commitea el cambio junto con tu codigo.

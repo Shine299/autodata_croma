@@ -1,22 +1,28 @@
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from app.schemas.verification import VerificationRequest, VerificationResponse, Confidence
+from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.core.jobs import job_store
+from app.repositories.verification_repo import VerificationRepository
+from app.schemas.verification import VerificationRequest
 from app.schemas.appraisal import AppraisalRequest, AppraisalResponse
 from app.services.vehicles import get_vehicle_inspection
-from app.services.sellers import get_seller_screening
-from app.services.scoring import calculate_score
 from app.services.appraisal import calculate_appraisal
+from app.services.plate import normalize_plate
 
 router = APIRouter(tags=["Verifications"])
 
 @router.post("/verifications/{verification_id}/appraisals", response_model=dict)
 async def create_appraisal(verification_id: str, req: AppraisalRequest):
-    # TODO: Fetch verification from DB using verification_id.
-    # For now, we mock the vehicle fetching to allow testing the endpoint directly.
-    vehicle = await get_vehicle_inspection("ABC123_CAUTION") # Mocked state
-    
+    # ponytail: fetch from DB when C-08 is done, for now re-query the plate
+    plate = getattr(req, "plate", None) or "D0H-741"
+    vehicle = await get_vehicle_inspection(plate)
+
     appraisal = calculate_appraisal(
         verification_id=verification_id,
         vehicle=vehicle,
@@ -27,9 +33,25 @@ async def create_appraisal(verification_id: str, req: AppraisalRequest):
 
 @router.post("/verifications", response_model=dict)
 async def create_verification(req: VerificationRequest):
-    vehicle = await get_vehicle_inspection(req.plate)
+    try:
+        plate = normalize_plate(req.plate)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid_plate")
+
+    vehicle = await get_vehicle_inspection(plate)
+
+    # D-10 caso 1: todas las fuentes devuelven not_found
+    all_not_found = all(s.status == "not_found" for s in vehicle.sources_summary)
+    if all_not_found:
+        raise HTTPException(
+            status_code=404,
+            detail="No encontramos registros para esa placa. Verifica que este bien escrita."
+        )
+
     seller = None
     if req.seller:
+        if not req.seller.consent:
+            raise HTTPException(status_code=400, detail="consent_required")
         seller = await get_seller_screening(req.seller.document_number)
     
     score = calculate_score(
@@ -69,3 +91,18 @@ async def create_verification(req: VerificationRequest):
     )
     
     return {"data": resp.model_dump(by_alias=True)}
+
+
+@router.get("/verifications/{verification_id}", response_model=dict)
+async def get_verification(
+    verification_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """C-08 — Recupera una verificación guardada por su id.
+
+    404 → el handler global lo convierte en el envelope `{"error": {...}}`.
+    """
+    payload = await VerificationRepository(db).get_by_id(verification_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="verification_not_found")
+    return {"data": payload}

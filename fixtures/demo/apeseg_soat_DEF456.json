@@ -1,0 +1,36 @@
+{
+  "found": true,
+  "plate": "DEF-456",
+  "has_active_soat": true,
+  "active": {
+    "company": "Rimac Seguros",
+    "status": "VIGENTE",
+    "start_date": "2026-03-15",
+    "end_date": "2027-03-15",
+    "policy_number": "000098765432000000000000",
+    "vehicle_use": "PARTICULAR",
+    "vehicle_class": "AUTOMOVIL",
+    "certificate_type": "DIGITAL",
+    "brand": null,
+    "model": null,
+    "created_date": "2026-03-15",
+    "annulled_date": null
+  },
+  "count": 3,
+  "certificates": [
+    {
+      "company": "Rimac Seguros",
+      "status": "VIGENTE",
+      "start_date": "2026-03-15",
+      "end_date": "2027-03-15",
+      "policy_number": "000098765432000000000000",
+      "vehicle_use": "PARTICULAR",
+      "vehicle_class": "AUTOMOVIL",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2026-03-15",
+      "annulled_date": null
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "found": true,
+  "plate": "JKL-012",
+  "has_active_soat": false,
+  "active": null,
+  "count": 1,
+  "certificates": [
+    {
+      "company": "La Positiva",
+      "status": "VENCIDO",
+      "start_date": "2024-01-10",
+      "end_date": "2025-01-10",
+      "policy_number": "000034567890000000000000",
+      "vehicle_use": "PARTICULAR",
+      "vehicle_class": "AUTOMOVIL",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2024-01-10",
+      "annulled_date": null
+    }
+  ]
+}
