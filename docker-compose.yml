@@ -18,11 +18,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: autodata-bot
-    command: python -m app.bot.main
     environment:
+      - PROCESS=bot
       - APP_ENV=dev
       - CROMA_MODE=mock
       - API_BASE_URL=http://api:8000/api/v1
+      # Sin token el bot crashea al arrancar con InvalidToken.
+      # Se toma del .env local; NO se versiona.
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     depends_on:
       - api
     restart: unless-stopped

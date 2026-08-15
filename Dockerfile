@@ -36,7 +36,13 @@ USER appuser
 EXPOSE 8000
 
 # Healthcheck targeting public API endpoint
+# (usaba os.environ sin importar `os` — fallaba siempre con NameError)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:' + str(os.environ.get('PORT', 8000)) + '/api/v1/health').getcode() == 200 else 1)"
+  CMD python -c "import os, urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:' + str(os.environ.get('PORT', 8000)) + '/api/v1/health').getcode() == 200 else 1)"
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Una sola imagen, dos procesos. Railway construye desde este Dockerfile, así que
+# el `Procfile` se ignora y el bot nunca arrancaba: la API quedaba viva y el bot
+# muerto. Con PROCESS=bot el mismo contenedor levanta el bot de Telegram.
+#   - Servicio API : (sin PROCESS)  → uvicorn
+#   - Servicio bot : PROCESS=bot    → python -m app.bot.main
+CMD ["sh", "-c", "if [ \"$PROCESS\" = \"bot\" ]; then exec python -m app.bot.main; else exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]

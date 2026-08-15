@@ -146,6 +146,36 @@ El merge de Sprint 3 dejó `app/main.py` sin 3 imports (`logging`, `RequestValid
 
 ---
 
+## 🔴 EL BOT NO RESPONDE — diagnóstico y qué falta (2026-08-15)
+
+Síntoma: el botón de la landing abre Telegram pero el bot no contesta.
+
+**Descartado — no es la landing.** Los 3 botones apuntan a `https://t.me/autodata_peru_bot`,
+reciben el click (verificado con `elementFromPoint`, nada los tapa) y la URL responde
+**HTTP 200** con el título real "AutoData Perú". El bot existe.
+
+**Causa real: el proceso del bot no está corriendo.** Es polling — necesita un proceso vivo
+que pregunte a Telegram por mensajes. Sin `TELEGRAM_BOT_TOKEN` crashea al arrancar
+(`telegram.error.InvalidToken`).
+
+### Arreglado por P5 (deploy — se tocó área de P4, coordinar)
+
+| Archivo | Bug | Arreglo |
+|---|---|---|
+| `Dockerfile` | `HEALTHCHECK` usaba `os.environ` **sin importar `os`** → `NameError`, el healthcheck fallaba siempre | Agregado `import os` |
+| `Dockerfile` | `CMD` sólo levantaba uvicorn. Railway construye desde el Dockerfile, así que el `Procfile` se ignora y **el bot nunca arrancaba en producción** | `CMD` con switch: `PROCESS=bot` → bot; sin la variable → uvicorn |
+| `docker-compose.yml` | El servicio `bot` no recibía `TELEGRAM_BOT_TOKEN` → habría crasheado igual | Token pasado desde el `.env` local |
+
+### Falta (no lo puede hacer P5)
+
+1. **P3 (José)** tiene el token — es el único. O corre el bot local, o lo carga como variable
+   de entorno en Railway.
+2. **P4 (Brayan)** debe crear en Railway un **segundo servicio** desde la misma imagen con
+   `PROCESS=bot`. Con un solo servicio sigue levantando sólo la API.
+3. Para que el bot dé veredictos, la API debe estar viva y accesible en `API_BASE_URL`.
+
+---
+
 ## Regla de dueño por carpeta
 
 | Persona | Carpetas |
