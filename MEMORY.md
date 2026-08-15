@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `jose-p3-sprint2`
-**Sprint actual:** Sprint 2 — "El producto decide" (bloque de P3 cerrado; falta la Puerta 2) → prep Sprint 3
-**Última actualización:** 2026-08-14 (P3 cerró D-02/D-04/D-05/D-06/D-07 + fix de integración; suite 147/147)
+**Rama activa:** `testing`
+**Sprint actual:** Sprint 3 — "Listo para usarse" → 🟢 **INICIADO** (Sprint 2 dado por concluido por decisión del equipo, chat 20:37 14/8: Joaquin "pasen al 3", confirmado por Carlos/Brayan — Puerta 2 formal no se documentó con checklist propio, pero suite en 147/147 verde)
+**Última actualización:** 2026-08-14 (P3 cerró D-02/D-04/D-05/D-06/D-07 + fix de integración; suite 147/147 — equipo avanza a Sprint 3)
 
 ---
 
@@ -69,6 +69,33 @@ Un merge había regresado `app/main.py` (solo 4 routers, sin exception handlers)
 - **C-08** — nueva ruta `GET /verifications/{id}` en `app/api/verifications.py`.
 - Asserts alineados al envelope: `tests/test_sellers_api.py` (×2), `tests/test_verification_persistence.py` (×1).
 - **P1/P2/P4: revisen estos cambios en sus carpetas al mergear** — fueron necesarios para cerrar la integración.
+
+---
+
+## Sprint 3 — "Listo para usarse" (EN CURSO)
+
+> Arrancado por decisión del equipo (chat 20:37, 14/8). Feature freeze a T-4h: desde ahí solo bugfixes.
+
+| | Área del sprint | Tareas | Incremento demostrable |
+|---|---|---|---|
+| **P1** | Datos de demo y cuota | **E-03** (sembrado en live — momento de mayor riesgo, solo P1 ejecuta), E-07 | 5 escenarios congelados + repo público limpio |
+| **P2** | Casos borde y robustez | D-10 (con P3), bugfixes | Los 7 casos borde de la spec §6 controlados |
+| **P3** | UX de error y pulido | D-08, D-09, mensajes de error | Ningún camino termina en un mensaje feo |
+| **P4** | Deploy y observabilidad | E-04, logs, health | URL pública estable + logs legibles |
+| **P5** | Pitch | **E-05** (guion cronometrado, ensayo ×2), **E-08** (slide de límites y roadmap) | Guion cronometrado en 3:00 |
+
+### Estado de P5 en Sprint 3
+
+| ID | Tarea | Estado | Nota |
+|----|-------|--------|------|
+| E-05 | Guion de demo de 3 min, cronometrado | 🟡 Contenido completo en `files/09-DEMO-PITCH.md` (guion con tiempos, Q&A del jurado, checklist, plan B) | Falta el **ensayo ×2 cronometrado con el equipo** — no es trabajo de archivo |
+| E-08 | Slide "límites conocidos y roadmap" (SUNARP, MTC) | 🔴 El contenido existe dentro del guion (min 2:15–2:45) pero no como pieza visual separada | Falta crear el slide |
+| — | Copy del `negotiationScript` | 🟡 Funciona (P2 lo implementó en `app/services/appraisal.py` con texto propio, sin usar `NEGOTIATION_SCRIPT` de `app/core/prompts.py`) | Opcional: P5 puede pulir el texto con P2. No bloqueante |
+
+### Después de Sprint 3 (Puerta 3 + Entrega) — tareas de P5
+
+- **Puerta 3:** verificar que las 4 placas cacheadas responden en < 3 s; facilitar el simulacro de Q&A del jurado.
+- **E-06** grabar video de respaldo (con P3) · **E-09** enviar el formulario de entrega (antes de las 6:00 p.m., no 6:29).
 
 ---
 
