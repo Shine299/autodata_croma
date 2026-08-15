@@ -1,0 +1,27 @@
+{
+  "found": true,
+  "plate": "JKL-012",
+  "has_infractions": true,
+  "count": 2,
+  "report_date": "2026-08-14",
+  "currency": "PEN",
+  "total": 1860,
+  "infractions": [
+    {
+      "document_number": "E11-2025-00312456",
+      "document_type": "PAPELETA",
+      "date": "2025-09-10",
+      "infraction_code": "M.1",
+      "classification": "MUY GRAVE",
+      "amount": 1240
+    },
+    {
+      "document_number": "E11-2025-00287654",
+      "document_type": "PAPELETA",
+      "date": "2025-05-22",
+      "infraction_code": "G.31",
+      "classification": "GRAVE",
+      "amount": 620
+    }
+  ]
+}

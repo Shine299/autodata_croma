@@ -1,0 +1,70 @@
+{
+  "found": true,
+  "plate": "DEF-456",
+  "report_date": "2026-08-14",
+  "data_through": "2021-08-14",
+  "accident_count": 3,
+  "has_active_soat": true,
+  "active": {
+    "company": "Rimac Seguros",
+    "status": "VIGENTE",
+    "start_date": "2026-03-15",
+    "end_date": "2027-03-15",
+    "policy_number": "000098765432000000000000",
+    "vehicle_use": "PARTICULAR",
+    "vehicle_class": "AUTOMOVIL",
+    "certificate_type": "DIGITAL",
+    "brand": null,
+    "model": null,
+    "created_date": "2026-03-15",
+    "annulled_date": null
+  },
+  "count": 3,
+  "policies": [
+    {
+      "company": "Rimac Seguros",
+      "status": "VIGENTE",
+      "start_date": "2026-03-15",
+      "end_date": "2027-03-15",
+      "policy_number": "000098765432000000000000",
+      "vehicle_use": "PARTICULAR",
+      "vehicle_class": "AUTOMOVIL",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2026-03-15",
+      "annulled_date": null,
+      "accidents": 2
+    },
+    {
+      "company": "Pacifico Seguros",
+      "status": "VENCIDO",
+      "start_date": "2024-06-01",
+      "end_date": "2025-06-01",
+      "policy_number": "000054321098000000000000",
+      "vehicle_use": "PARTICULAR",
+      "vehicle_class": "AUTOMOVIL",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2024-06-01",
+      "annulled_date": null,
+      "accidents": 1
+    },
+    {
+      "company": "Pacifico Seguros",
+      "status": "VENCIDO",
+      "start_date": "2023-06-01",
+      "end_date": "2024-06-01",
+      "policy_number": "000043210987000000000000",
+      "vehicle_use": "PARTICULAR",
+      "vehicle_class": "AUTOMOVIL",
+      "certificate_type": "DIGITAL",
+      "brand": null,
+      "model": null,
+      "created_date": "2023-06-01",
+      "annulled_date": null,
+      "accidents": 0
+    }
+  ]
+}

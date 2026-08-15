@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `sprint1-arroz`
-**Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P2 cerró C-04, C-05, C-06)
+**Rama activa:** `joaquin-p1-sprint3`
+**Sprint actual:** Sprint 3 — "Listo para usarse"
+**Última actualización:** 2026-08-14 (P1 cerró E-03, E-07)
 
 ---
 
@@ -45,6 +45,9 @@
 | C-04 | `scoring_service`: flags, riskScore y verdict | P2 | `app/services/scoring.py`, `tests/test_scoring.py` |
 | C-05 | `POST /api/v1/verifications` orquestando datos | P2 | `app/api/verifications.py`, `tests/test_verifications.py` |
 | C-06 | `appraisal_service` + `POST /verifications/{id}/appraisals` | P2 | `app/services/appraisal.py`, `tests/test_appraisal.py` |
+
+| E-03 | Sembrar 5 placas en live y congelar fixtures | P1 | `fixtures/demo/` (24 archivos), `docs/quota-log.md`, `app/integrations/croma/client.py` |
+| E-07 | README publico del repo | P1 | `README.md` reescrito para terceros |
 
 ### Pendiente
 
