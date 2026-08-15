@@ -112,40 +112,60 @@
       box-shadow: 0 1px 24px -12px rgba(10,15,28,.18);
     }
 
-    /* Enlace secundario: pastilla suave al hover (jerarquía por debajo del CTA). */
+    /* Enlace secundario.
+       UN solo cambio al hover (fondo), no tres a la vez: el subrayado + fondo +
+       color simultáneos leían como ruido. El color se reserva para el estado activo. */
     .nav-link {
-      position: relative; padding: .4375rem .75rem; border-radius: 9999px;
+      position: relative; display: inline-flex; align-items: center;
+      padding: .5rem .75rem; border-radius: .625rem;
       color: var(--ink-2);
-      transition: color .25s ease, background-color .25s ease;
+      transition: color .2s ease, background-color .2s ease;
     }
-    .nav-link:hover { color: var(--ink); background-color: rgba(10,15,28,.045); }
-    .nav-link::after {
-      content: ""; position: absolute; left: .75rem; right: .75rem; bottom: .1875rem;
-      height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left;
-      transition: transform .35s cubic-bezier(.16,1,.3,1); opacity: .35;
+    .nav-link:hover { color: var(--ink); background-color: rgba(10,15,28,.05); }
+
+    /* Sección activa (scrollspy): punto discreto, no un subrayado que compita con el CTA. */
+    .nav-link[aria-current="true"] { color: var(--ink); }
+    .nav-link[aria-current="true"]::before {
+      content: ""; position: absolute; left: 50%; bottom: .0625rem; translate: -50% 0;
+      width: .25rem; height: .25rem; border-radius: 50%; background: var(--em);
     }
-    .nav-link:hover::after { transform: scaleX(1); }
 
     /* CTA principal: elevación sutil que crece al hover. */
     .nav-cta {
-      transition: background-color .25s ease, transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease;
+      transition: background-color .2s ease, transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease;
       box-shadow: 0 1px 2px rgba(10,15,28,.16), 0 6px 16px -8px rgba(10,15,28,.35);
     }
     .nav-cta:hover {
       background-color: #1b2436; transform: translateY(-1px);
       box-shadow: 0 2px 4px rgba(10,15,28,.18), 0 12px 24px -10px rgba(10,15,28,.45);
     }
-    .nav-cta:active { transform: translateY(0); }
+    .nav-cta:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(10,15,28,.2); }
 
-    /* Hamburguesa: 3 trazos que se transforman en X. */
+    /* Foco visible: la auditoría encontró CERO reglas de :focus (WCAG 2.4.7).
+       :focus-visible sólo se dibuja con teclado, no al hacer click con el mouse. */
+    .nav a:focus-visible, .nav button:focus-visible, .skip-link:focus-visible {
+      outline: 2px solid var(--em); outline-offset: 3px; border-radius: .625rem;
+    }
+    .nav-cta:focus-visible { outline-offset: 3px; }
+
+    /* Saltar al contenido: primer tab de la página para lectores de pantalla. */
+    .skip-link {
+      position: absolute; left: 1rem; top: -4rem; z-index: 60;
+      background: var(--navy); color: #fff; padding: .625rem 1rem; border-radius: .625rem;
+      font-size: .875rem; transition: top .2s ease;
+    }
+    .skip-link:focus { top: .75rem; }
+
+    /* Hamburguesa: área táctil de 44x44 (WCAG 2.5.5); los trazos van dentro. */
+    .burger { width: 2.75rem; height: 2.75rem; display: grid; place-content: center; }
     .burger span {
-      display: block; width: 1.0625rem; height: 1.5px; background: var(--ink); border-radius: 2px;
+      display: block; width: 1.125rem; height: 1.5px; background: var(--ink); border-radius: 2px;
       transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .2s ease;
     }
-    .burger span + span { margin-top: .25rem; }
-    .burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(.4375rem) rotate(45deg); }
+    .burger span + span { margin-top: .3125rem; }
+    .burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(.40625rem) rotate(45deg); }
     .burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-    .burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-.4375rem) rotate(-45deg); }
+    .burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-.40625rem) rotate(-45deg); }
 
     /* Panel móvil: se despliega con altura animada. */
     .nav-panel {
@@ -165,35 +185,38 @@
 </head>
 <body>
 
+  <a href="#main" class="skip-link">Saltar al contenido</a>
+
   <!-- Nav -->
   <header id="nav" class="nav sticky top-0 z-50 backdrop-blur-xl bg-white/75">
     <div class="max-w-[76rem] mx-auto px-6">
       <div class="h-[3.75rem] flex items-center justify-between gap-6">
 
-        <!-- Logo -->
-        <a href="#" class="shrink-0 text-[1.0625rem] font-[560] tracking-[-.03em] hover:opacity-70 transition-opacity">
+        <!-- Logo: ancla real, no href="#" muerto -->
+        <a href="#inicio" class="shrink-0 text-[1.0625rem] font-[560] tracking-[-.03em] py-2 hover:opacity-60 transition-opacity"
+           aria-label="AutoData — ir al inicio">
           Auto<span class="text-[--em]">Data</span>
         </a>
 
-        <!-- Enlaces + CTA, agrupados a la derecha -->
-        <div class="hidden md:flex items-center gap-1.5">
-          <nav class="flex items-center gap-0.5 text-[.9375rem] tracking-[-.01em]">
-            <a href="#problema" class="nav-link">Problema</a>
-            <a href="#producto" class="nav-link">Producto</a>
-            <a href="#demo"     class="nav-link">Demo</a>
+        <!-- Enlaces + CTA agrupados a la derecha.
+             Sin separador: con 4 items y el espaciado correcto, la jerarquía la
+             da el peso visual del CTA. Un divisor más era ruido. -->
+        <div class="hidden md:flex items-center gap-6">
+          <nav class="flex items-center gap-1 text-[.9375rem] tracking-[-.01em]" aria-label="Navegación principal">
+            <a href="#problema" class="nav-link" data-spy="problema">Problema</a>
+            <a href="#producto" class="nav-link" data-spy="producto">Producto</a>
+            <a href="#demo"     class="nav-link" data-spy="demo">Demo</a>
+            <a href="#limites"  class="nav-link" data-spy="limites">Límites</a>
           </nav>
 
-          <!-- Separador: marca la jerarquía entre secundarios y CTA -->
-          <span class="w-px h-4 bg-[--line] mx-2.5" aria-hidden="true"></span>
-
           <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
-             class="nav-cta bg-[--navy] text-white text-[.875rem] font-medium tracking-[-.01em] px-4 py-2 rounded-full">
+             class="nav-cta bg-[--navy] text-white text-[.875rem] font-medium tracking-[-.01em] px-[1.125rem] py-[.5625rem] rounded-full">
             Probar gratis
           </a>
         </div>
 
-        <!-- Hamburguesa -->
-        <button id="burger" type="button" class="burger md:hidden p-2 -mr-2 rounded-lg hover:bg-[rgba(10,15,28,.05)] transition-colors"
+        <!-- Hamburguesa: 44x44 de área táctil (WCAG 2.5.5) -->
+        <button id="burger" type="button" class="burger md:hidden -mr-2.5 rounded-xl hover:bg-[rgba(10,15,28,.05)] transition-colors"
                 aria-expanded="false" aria-controls="nav-panel" aria-label="Abrir menú">
           <span></span><span></span><span></span>
         </button>
@@ -201,13 +224,13 @@
 
       <!-- Panel móvil -->
       <div id="nav-panel" class="nav-panel md:hidden">
-        <nav class="flex flex-col py-3 border-t border-[--line] text-[.9375rem] tracking-[-.01em]">
-          <a href="#problema" class="nav-link !rounded-lg !px-3 py-2.5">Problema</a>
-          <a href="#producto" class="nav-link !rounded-lg !px-3 py-2.5">Producto</a>
-          <a href="#demo"     class="nav-link !rounded-lg !px-3 py-2.5">Demo</a>
-          <a href="/limites"  class="nav-link !rounded-lg !px-3 py-2.5">Límites</a>
+        <nav class="flex flex-col gap-0.5 py-3 border-t border-[--line] text-[1rem] tracking-[-.01em]" aria-label="Navegación móvil">
+          <a href="#problema" class="nav-link !px-3 !py-3" data-spy="problema">Problema</a>
+          <a href="#producto" class="nav-link !px-3 !py-3" data-spy="producto">Producto</a>
+          <a href="#demo"     class="nav-link !px-3 !py-3" data-spy="demo">Demo</a>
+          <a href="#limites"  class="nav-link !px-3 !py-3" data-spy="limites">Límites</a>
           <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
-             class="nav-cta mt-3 mb-1 bg-[--navy] text-white text-[.9375rem] font-medium tracking-[-.01em] px-4 py-3 rounded-full text-center">
+             class="nav-cta mt-3 mb-1 bg-[--navy] text-white text-[1rem] font-medium tracking-[-.01em] px-4 py-3.5 rounded-full text-center">
             Probar gratis
           </a>
         </nav>
@@ -215,8 +238,10 @@
     </div>
   </header>
 
+  <main id="main">
+
   <!-- Hero -->
-  <section class="relative overflow-hidden grain">
+  <section id="inicio" class="relative overflow-hidden grain">
     <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
 
     <div class="relative max-w-[76rem] mx-auto px-6 pt-24 pb-28 grid lg:grid-cols-[1.1fr_.9fr] gap-16 items-center">
@@ -295,7 +320,7 @@
   </div>
 
   <!-- Problema -->
-  <section id="problema" class="max-w-[76rem] mx-auto px-6 py-28">
+  <section id="problema" class="scroll-mt-20 max-w-[76rem] mx-auto px-6 py-28">
     <div class="grid lg:grid-cols-[.85fr_1.15fr] gap-14">
       <div class="rv">
         <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">01 — EL PROBLEMA</p>
@@ -329,7 +354,7 @@
   </section>
 
   <!-- Producto — bento -->
-  <section id="producto" class="bg-[--paper] border-y border-[--line] py-28">
+  <section id="producto" class="scroll-mt-20 bg-[--paper] border-y border-[--line] py-28">
     <div class="max-w-[76rem] mx-auto px-6">
       <div class="rv max-w-[38rem] mb-14">
         <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">02 — QUÉ HACE</p>
@@ -398,7 +423,7 @@
   </section>
 
   <!-- Demo -->
-  <section id="demo" class="max-w-[64rem] mx-auto px-6 py-28">
+  <section id="demo" class="scroll-mt-20 max-w-[64rem] mx-auto px-6 py-28">
     <div class="rv max-w-[38rem] mb-12">
       <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">03 — CÓMO SE USA</p>
       <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Escribes como hablas.</h2>
@@ -446,21 +471,38 @@
     </div>
   </section>
 
-  <!-- Honestidad -->
-  <section class="border-t border-[--line] py-28">
-    <div class="max-w-[76rem] mx-auto px-6 grid lg:grid-cols-[.85fr_1.15fr] gap-14">
-      <div class="rv">
-        <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">04 — HONESTIDAD</p>
-        <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Lo que <span class="text-rose-500">no</span><br>hacemos.</h2>
-        <p class="lede text-[1.0625rem] text-[--ink-2] mt-5">Preferimos un producto honesto a uno que promete de más.</p>
-       
+  <!-- Límites y roadmap -->
+  <section id="limites" class="border-t border-[--line] py-28 scroll-mt-20">
+    <div class="max-w-[76rem] mx-auto px-6">
+      <div class="rv max-w-[38rem] mb-14">
+        <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2] mb-4">04 — LÍMITES Y ROADMAP</p>
+        <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Lo que <span class="text-rose-500">no</span> hacemos — y qué sigue.</h2>
+        <p class="lede text-[1.0625rem] text-[--ink-2] mt-5">
+          Preferimos un producto honesto a uno que promete de más. Todo esto se lo decimos
+          al usuario dentro del bot, no en letra chica.
+        </p>
       </div>
-      <ul class="rv divide-y divide-[--line] border-y border-[--line]" data-d="1">
-        <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">01</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin SUNARP.</span> No damos cadena de propietarios ni reportes de robo.</p></li>
-        <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">02</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin MTC.</span> No tenemos revisión técnica vigente.</p></li>
-        <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">03</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No reemplaza al mecánico.</span> Verificamos papeles, no el estado físico.</p></li>
-        <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">04</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No damos asesoría legal.</span> Mostramos datos oficiales; decides tú.</p></li>
-      </ul>
+
+      <div class="grid lg:grid-cols-2 gap-14">
+        <div class="rv">
+          <p class="mono text-[.6875rem] tracking-[.14em] text-rose-500 mb-5">LÍMITES CONOCIDOS</p>
+          <ul class="divide-y divide-[--line] border-y border-[--line]">
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">01</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin SUNARP.</span> No damos cadena de propietarios, gravámenes ni reportes de robo. Croma no lo expone y SUNARP tiene captcha.</p></li>
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">02</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin MTC.</span> No tenemos revisión técnica vigente.</p></li>
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">03</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No reemplaza al mecánico.</span> Verificamos papeles y señales de riesgo, no el estado físico.</p></li>
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[#c3cad4] pt-1">04</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No damos asesoría legal.</span> Mostramos datos oficiales; la decisión es tuya.</p></li>
+          </ul>
+        </div>
+
+        <div class="rv" data-d="1">
+          <p class="mono text-[.6875rem] tracking-[.14em] text-[--em] mb-5">ROADMAP</p>
+          <ol class="divide-y divide-[--line] border-y border-[--line]">
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">01</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">SUNARP y MTC</span> en cuanto Croma los exponga. La arquitectura de adapters ya está lista: es agregar una fuente, no rehacer el producto.</p></li>
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">02</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sello verificado con QR</span> para avisos de Marketplace. Cada aviso con el sello es distribución gratuita.</p></li>
+            <li class="py-5 flex gap-5"><span class="mono text-[.75rem] text-[--em] pt-1">03</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">API para concesionarias.</span> Ellas pagan, el comprador ve el reporte gratis. Quien compra un auto cada cinco años no debería ser el que paga.</p></li>
+          </ol>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -475,6 +517,8 @@
       </a>
     </div>
   </section>
+
+  </main>
 
   <footer class="py-9 border-t border-[--line]">
     <div class="max-w-[76rem] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-[.875rem] text-[--ink-2]">
@@ -498,7 +542,47 @@
       burger.setAttribute('aria-expanded', String(open));
       burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
       panel.classList.toggle('open', open);
+      // Con el menú abierto el fondo no debe desplazarse detrás del panel.
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (!open) burger.focus({ preventScroll: true });
     };
+
+    // Scrollspy: el usuario debe saber en qué sección está sin tener que adivinar.
+    // Un punto discreto bajo el enlace activo — no un subrayado que compita con el CTA.
+    //
+    // Se calcula por posición en cada scroll en vez de con IntersectionObserver:
+    // el observer mantiene un Set de secciones visibles que queda desincronizado
+    // cuando el usuario salta de golpe (click en un ancla, Fin, restaurar scroll).
+    // Medir contra una línea de referencia es determinista.
+    const spyLinks = [...document.querySelectorAll('[data-spy]')];
+    const sections = [...new Set(spyLinks.map((a) => a.dataset.spy))]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    let spyTick = false;
+    function updateSpy() {
+      spyTick = false;
+      const linea = window.innerHeight * 0.35;   // 35% de la altura del viewport
+      let activa = null;
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        if (r.top <= linea && r.bottom > linea) { activa = s.id; break; }
+      }
+      // Al final de la página gana la última sección, aunque no cruce la línea.
+      if (!activa && window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
+        activa = sections[sections.length - 1]?.id ?? null;
+      }
+      spyLinks.forEach((a) => {
+        if (activa && a.dataset.spy === activa) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+    }
+    if (sections.length) {
+      const onSpy = () => { if (!spyTick) { spyTick = true; requestAnimationFrame(updateSpy); } };
+      window.addEventListener('scroll', onSpy, { passive: true });
+      window.addEventListener('resize', onSpy, { passive: true });
+      updateSpy();
+    }
 
     burger.addEventListener('click', () => {
       setMenu(burger.getAttribute('aria-expanded') !== 'true');
