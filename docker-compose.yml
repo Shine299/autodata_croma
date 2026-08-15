@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autodata-api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=dev
+      - CROMA_MODE=mock
+      - CROMA_TIMEOUT_SECONDS=40
+      - DATABASE_URL=sqlite+aiosqlite:///:memory:
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autodata-bot
+    command: python -m app.bot.main
+    environment:
+      - APP_ENV=dev
+      - CROMA_MODE=mock
+      - API_BASE_URL=http://api:8000/api/v1
+    depends_on:
+      - api
+    restart: unless-stopped

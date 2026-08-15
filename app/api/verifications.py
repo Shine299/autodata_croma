@@ -2,11 +2,16 @@ import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.verification import VerificationRequest, VerificationResponse, Confidence
+from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.core.jobs import job_store
+from app.repositories.verification_repo import VerificationRepository
+from app.schemas.verification import VerificationRequest
 from app.schemas.appraisal import AppraisalRequest, AppraisalResponse
 from app.services.vehicles import get_vehicle_inspection
-from app.services.sellers import get_seller_screening
-from app.services.scoring import calculate_score
 from app.services.appraisal import calculate_appraisal
 from app.services.plate import normalize_plate
 
@@ -86,3 +91,18 @@ async def create_verification(req: VerificationRequest):
     )
     
     return {"data": resp.model_dump(by_alias=True)}
+
+
+@router.get("/verifications/{verification_id}", response_model=dict)
+async def get_verification(
+    verification_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """C-08 — Recupera una verificación guardada por su id.
+
+    404 → el handler global lo convierte en el envelope `{"error": {...}}`.
+    """
+    payload = await VerificationRepository(db).get_by_id(verification_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="verification_not_found")
+    return {"data": payload}

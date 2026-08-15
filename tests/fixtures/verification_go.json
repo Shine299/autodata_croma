@@ -1,0 +1,20 @@
+{
+  "verificationId": "ver_go_0001",
+  "createdAt": "2026-08-14T12:00:00Z",
+  "plate": "ABC123",
+  "verdict": "GO",
+  "riskScore": 8,
+  "headline": "Todo en orden: puedes avanzar con tranquilidad.",
+  "summary": "SOAT vigente, sin papeletas graves ni deudas. No se detectaron alertas.",
+  "flags": [],
+  "vehicle": {},
+  "seller": null,
+  "appraisal": null,
+  "confidence": {
+    "verifiedSources": 6,
+    "totalSources": 6,
+    "capped": false
+  },
+  "reportUrl": "https://autodata.pe/r/ver_go_0001",
+  "disclaimer": "Datos de fuentes oficiales al momento de la consulta. No constituye asesoría legal."
+}
