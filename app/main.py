@@ -10,12 +10,20 @@ from app.api.jobs import router as jobs_router
 from app.api.quota import router as quota_router
 from app.api.sellers import router as sellers_router
 from app.api.verifications import router as verifications_router
+from app.core.logging import ObservabilityMiddleware
 from app.web.routes import router as web_router
 from app.schemas.common import ErrorDetail, ErrorEnvelope
 
 logger = logging.getLogger("autodata.main")
 
-app = FastAPI(title="AutoData", version="0.1.0")
+app = FastAPI(
+    title="AutoData API",
+    description="Plataforma de verificación vehicular y screening de vendedor para Perú vía Croma",
+    version="0.1.0",
+)
+
+# --- Observabilidad y Telemetría (P4) -------------------------------------
+app.add_middleware(ObservabilityMiddleware)
 
 # --- Routers --------------------------------------------------------------
 app.include_router(health_router, prefix="/api/v1")
