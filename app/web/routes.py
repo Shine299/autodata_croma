@@ -31,6 +31,12 @@ async def landing(request: Request):
     return templates.TemplateResponse(request=request, name="landing.html", context={"sources": SOURCES})
 
 
+@router.get("/limites", response_class=HTMLResponse)
+async def limites(request: Request):
+    """E-08 — slide de límites conocidos y roadmap, para proyectar en la demo."""
+    return templates.TemplateResponse(request=request, name="limites.html", context={})
+
+
 @router.get("/r/{verification_id}", response_class=HTMLResponse)
 async def report(request: Request, verification_id: str, db: AsyncSession = Depends(get_db)):
     """E-01 — página pública del reporte de una verificación (semáforo + fuentes)."""

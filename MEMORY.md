@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `joaquin-p1-sprint3`
+**Rama activa:** `testing`
 **Sprint actual:** Sprint 3 — "Listo para usarse"
-**Última actualización:** 2026-08-14 (P1 cerró E-03, E-07)
+**Última actualización:** 2026-08-14 (P1 cerró E-03/E-07; P4 cerró E-04 + observabilidad; P5 cerró E-08)
 
 ---
 
@@ -48,13 +48,40 @@
 
 | E-03 | Sembrar 5 placas en live y congelar fixtures | P1 | `fixtures/demo/` (24 archivos), `docs/quota-log.md`, `app/integrations/croma/client.py` |
 | E-07 | README publico del repo | P1 | `README.md` reescrito para terceros |
+| E-04 | Deploy + observabilidad (Docker, Railway/Render, telemetría) | P4 | `Dockerfile`, `docker-compose.yml`, `Procfile`, `railway.json`, `render.yaml`, `app/core/logging.py` |
+| E-08 | Slide "límites conocidos y roadmap" (SUNARP, MTC) | P5 | `app/web/templates/limites.html`, ruta `/limites` en `app/web/routes.py` |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
-| A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+| D-08 | Flujo de vendedor con confirmación explícita | P3 | — |
+| D-09 | Flujo de tasación con guion copiable | P3 | — |
+| D-10 | Mensajes de error para los 7 casos borde | P3 + P2 | — |
+| E-05 | Guion de demo cronometrado | P5 | Contenido listo en `files/09-DEMO-PITCH.md`. Falta el **ensayo ×2 con cronómetro** (no es trabajo de archivo) |
+| E-06 | Grabar video de respaldo | P5 + P3 | Depende de E-03 ✅ y D-09 |
+| E-09 | Enviar el formulario de entrega | P5 | Antes de las 6:00 p.m., no 6:29 |
+
+> **Nota:** A-07 (prompts base) y E-02 (landing) figuraban como pendientes de P5 en una versión
+> anterior de este archivo. Ambos están **completados y mergeados** desde Sprint 1 —
+> ver `app/core/prompts.py` y `app/web/templates/landing.html`. Igual E-01 (`report.html`).
+
+### ⚠️ ALERTA — `app/main.py` quedó roto en el merge de `testing` (665c9c3)
+
+El merge de Sprint 3 dejó `app/main.py` sin 3 imports (`logging`, `RequestValidationError`,
+`StarletteHTTPException`). Efecto: **la app no importaba** y **9 módulos de test no colectaban**
+(la suite entera no corría, no era "151/151 verde").
+
+- **P5 agregó solo los 3 imports** (cambio mínimo para desbloquear; sin tocar lógica de nadie).
+- **Queda pendiente para P1/P2/P4** — no es de P5 y no se tocó:
+  1. `app/main.py` tiene **handlers duplicados**: `HTTPException`/`Exception` registrados dos veces
+     (versión de P1 en líneas ~25-48 y versión con envelope en ~81-108). Gana el último registrado,
+     pero conviene borrar el duplicado.
+  2. `ObservabilityMiddleware` **se importa pero nunca se registra** (`app.add_middleware` no existe)
+     → la observabilidad de P4 no está activa. Esto rompe `tests/test_observability.py`.
+  3. **13 tests en rojo** tras desbloquear la colección: `test_error_handler`, `test_jobs`,
+     `test_observability`, `test_sellers_api`, `test_verification_async`, `test_verifications`.
+     Todos en carpetas de P1/P2/P3/P4. Los 144 restantes pasan.
 
 ### Observaciones del review
 
