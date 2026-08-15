@@ -19,9 +19,12 @@ import uuid
 from datetime import datetime, timezone
 
 from app.core.jobs import job_store
+from app.integrations.croma.client import CromaClient
+from app.schemas.seller import SellerScreeningRequest
 from app.schemas.verification import Confidence, VerificationRequest, VerificationResponse
+from app.services.appraisal import calculate_appraisal
 from app.services.scoring import calculate_score
-from app.services.sellers import get_seller_screening
+from app.services.seller import perform_seller_screening
 from app.services.vehicles import get_vehicle_inspection
 
 # Las 6 fuentes oficiales que se consultan (nombres visibles, alineados al orquestador).
@@ -38,7 +41,20 @@ async def build_verification(req: VerificationRequest) -> VerificationResponse:
     vehicle = await get_vehicle_inspection(req.plate)
     seller = None
     if req.seller:
-        seller = await get_seller_screening(req.seller.document_number)
+        # D-08: screening REAL del vendedor vía Croma (SUNAT + SAT Lima).
+        screening_req = SellerScreeningRequest(
+            document_type=req.seller.document_type,
+            document_number=req.seller.document_number,
+            claimed_role=req.seller.claimed_role,
+            consent=req.seller.consent,
+        )
+        # Sin sesión compartida: perform_seller_screening consulta 2 fuentes en paralelo
+        # y un AsyncSession no es seguro concurrentemente. Consulta Croma directo.
+        client = CromaClient()
+        try:
+            seller = await perform_seller_screening(screening_req, client)
+        finally:
+            await client.close()
 
     score = calculate_score(
         vehicle=vehicle,
@@ -54,6 +70,17 @@ async def build_verification(req: VerificationRequest) -> VerificationResponse:
 
     verification_id = str(uuid.uuid4())
 
+    # Si el cliente ya trajo el precio, calculamos aquí mismo la tasación (precio objetivo
+    # = precio pedido − deducciones VERIFICADAS) para entregar el análisis en un solo paso.
+    # No hay precio de mercado (Croma no lo da) → no se estima ningún valor de mercado.
+    appraisal_dump = None
+    if req.asking_price:
+        appraisal_dump = calculate_appraisal(
+            verification_id=verification_id,
+            vehicle=vehicle,
+            asking_price=req.asking_price,
+        ).model_dump(by_alias=True)
+
     return VerificationResponse(
         verification_id=verification_id,
         created_at=datetime.now(timezone.utc).isoformat(),
@@ -65,7 +92,7 @@ async def build_verification(req: VerificationRequest) -> VerificationResponse:
         flags=score.flags,
         vehicle=vehicle.model_dump(by_alias=True),
         seller=seller.model_dump(by_alias=True) if seller else None,
-        appraisal=None,
+        appraisal=appraisal_dump,
         confidence=Confidence(
             verified_sources=verified_sources,
             total_sources=total_sources,

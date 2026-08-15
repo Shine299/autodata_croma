@@ -23,9 +23,18 @@ class VerificationApiError(Exception):
     `status_code` es el HTTP recibido, o None si ni siquiera hubo respuesta.
     """
 
-    def __init__(self, message: str, *, status_code: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: Optional[int] = None,
+        connection_error: bool = False,
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
+        # True cuando ni siquiera se pudo contactar a la API local (uvicorn apagado / puerto
+        # equivocado), a diferencia de un 5xx o de un job que falló. Cambia el mensaje al usuario.
+        self.connection_error = connection_error
 
 
 def _build_payload(
@@ -58,7 +67,7 @@ async def create_verification(
         async with httpx.AsyncClient(timeout=settings.croma_timeout_seconds) as client:
             resp = await client.post(url, json=payload)
     except httpx.RequestError as exc:  # timeout, DNS, conexión rechazada, etc.
-        raise VerificationApiError(f"no se pudo contactar a la API: {exc}") from exc
+        raise VerificationApiError(f"no se pudo contactar a la API: {exc}", connection_error=True) from exc
 
     if resp.status_code >= 500:
         raise VerificationApiError(
@@ -85,15 +94,21 @@ async def create_verification(
         raise VerificationApiError("la API devolvió una respuesta vacía")
     return data
 
-async def create_appraisal(verification_id: str, asking_price: float) -> dict[str, Any]:
+async def create_appraisal(
+    verification_id: str,
+    asking_price: float,
+    plate: Optional[str] = None,
+) -> dict[str, Any]:
     url = f"{settings.api_base_url}/verifications/{verification_id}/appraisals"
-    payload = {"askingPrice": asking_price, "currency": "PEN", "tone": "cordial"}
+    payload: dict[str, Any] = {"askingPrice": asking_price, "currency": "PEN", "tone": "cordial"}
+    if plate:
+        payload["plate"] = plate
 
     try:
         async with httpx.AsyncClient(timeout=settings.croma_timeout_seconds) as client:
             resp = await client.post(url, json=payload)
     except httpx.RequestError as exc:
-        raise VerificationApiError(f"no se pudo contactar a la API: {exc}") from exc
+        raise VerificationApiError(f"no se pudo contactar a la API: {exc}", connection_error=True) from exc
 
     if resp.status_code >= 500:
         raise VerificationApiError(f"la API respondió {resp.status_code}", status_code=resp.status_code)

@@ -7,6 +7,9 @@ class AppraisalRequest(CamelModel):
     asking_price: float
     currency: str = "PEN"
     tone: str = "cordial"
+    # D-09: placa real a tasar. Si no viene, el endpoint intenta recuperarla de la
+    # verificación guardada (C-08) antes de caer a un valor por defecto de demo.
+    plate: str | None = None
 
 
 class Deduction(CamelModel):

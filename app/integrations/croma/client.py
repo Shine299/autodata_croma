@@ -198,7 +198,7 @@ class CromaClient:
 
     def _mock_call(self, source: str, body: dict) -> SourceResult:
         # ponytail: linear scan of fixtures dir, glob if fixtures grow past ~50
-        lookup = body.get("plate") or body.get("document_number") or "default"
+        lookup = body.get("plate") or body.get("document_number") or body.get("ruc") or "default"
         source_lower = source.lower()
         fixture_path = DEMO_DIR / f"{source_lower}_{lookup}.json"
         if not fixture_path.exists():

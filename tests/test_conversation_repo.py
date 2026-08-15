@@ -89,7 +89,7 @@ def test_transition_plate_moves_to_awaiting_price():
     state, ctx, reply = next_state(State.IDLE, Extracted(plate="ABC123"), {})
     assert state is State.AWAITING_PRICE
     assert ctx["plate"] == "ABC123"
-    assert "ABC123" in reply
+    assert "ABC-123" in reply  # la placa se muestra con guion
 
 
 def test_transition_price_after_plate_moves_to_done():

@@ -44,6 +44,14 @@ VERDICT_TEMPLATE = (
     "Alertas: {flags}"
 )
 
+FALLBACK_REPLY = (
+    "El usuario escribió un mensaje que no contiene una placa ni un precio reconocibles. "
+    "Respóndele en 1 o 2 líneas, en español peruano cercano y amable, sin sonar a robot. "
+    "Reencáusalo con naturalidad a que te mande la placa del auto (formato ejemplo `ABC-123`) "
+    "para poder revisarlo. No inventes datos ni prometas nada que no puedas hacer.\n\n"
+    'Mensaje del usuario: "{user_message}"'
+)
+
 NEGOTIATION_SCRIPT = (
     "Escribe un mensaje que el COMPRADOR le enviará al VENDEDOR por WhatsApp para negociar "
     "el precio con base en hallazgos objetivos.\n\n"

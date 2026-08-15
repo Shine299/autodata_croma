@@ -23,10 +23,18 @@ _SOURCES = [
 ]
 
 
+def _source_body(source: str, plate: str) -> dict:
+    """Body por fuente. SAT Lima cuenta usa document_type/document_number (por placa);
+    el resto de fuentes vehiculares reciben `plate` directamente (ver /catalog de Croma)."""
+    if source == "sat_lima":
+        return {"document_type": "placa", "document_number": plate}
+    return {"plate": plate}
+
+
 async def _fetch_source(client: CromaClient, source: str, path: str, plate: str) -> SourceResult:
     t0 = time.monotonic()
     try:
-        result = await client.call(source, path, {"plate": plate})
+        result = await client.call(source, path, _source_body(source, plate), cache_key=plate)
         return result
     except Exception as e:
         return SourceResult(
@@ -38,6 +46,10 @@ async def _fetch_source(client: CromaClient, source: str, path: str, plate: str)
 
 
 async def get_vehicle_inspection(plate: str) -> VehicleInspectionResponse:
+    # Las 6 fuentes se consultan en paralelo (asyncio.gather). Un AsyncSession de
+    # SQLAlchemy NO es seguro para uso concurrente, así que aquí el cliente va SIN
+    # sesión (sin caché read-through): consulta Croma directo. La cuota real es amplia
+    # (500/24h por endpoint) y la demo rápida usa los fixtures sembrados en fixtures/demo.
     client = CromaClient()
     try:
         results = await asyncio.gather(
