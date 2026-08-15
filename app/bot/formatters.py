@@ -74,3 +74,29 @@ def format_verdict(data: Dict[str, Any]) -> str:
         lines.append(f"_{disclaimer}_")
 
     return "\n".join(lines)
+
+
+def format_appraisal(data: Dict[str, Any]) -> str:
+    """Formatea el resultado de la tasación (D-09)."""
+    asking_price = data.get("askingPrice", 0)
+    fair_price = data.get("fairPrice", 0)
+    
+    lines = [
+        f"💰 *Precio solicitado:* S/ {asking_price:,.0f}",
+        f"✅ *Precio sugerido:* S/ {fair_price:,.0f}",
+        ""
+    ]
+    
+    deductions = data.get("deductions", [])
+    if deductions:
+        lines.append("*Deducciones:*")
+        for ded in deductions:
+            lines.append(f"• {ded.get('concept')}: *-S/ {ded.get('amount'):,.0f}*")
+        lines.append("")
+    
+    script = data.get("negotiationScript", "")
+    if script:
+        lines.append("*Guion de negociación sugerido:*")
+        lines.append(f"```\n{script}\n```")
+        
+    return "\n".join(lines)
