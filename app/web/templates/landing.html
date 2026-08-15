@@ -4,145 +4,457 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoData — Verifica antes de comprar</title>
+  <meta name="description" content="Verifica un auto usado en Perú con una sola placa. Veredicto, alertas y precio justo en menos de un minuto.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { animation: fade-in 0.6s ease-out both; }
-    .fade-in-delay { animation: fade-in 0.6s ease-out 0.2s both; }
-    .fade-in-delay-2 { animation: fade-in 0.6s ease-out 0.4s both; }
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --em: #059669;
+      --em-soft: #ecfdf5;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { background: #ffffff; color: var(--ink); }
+
+    /* ---- Malla de color animada del hero ---- */
+    .mesh { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .blob {
+      position: absolute; border-radius: 9999px; filter: blur(70px); opacity: .5;
+      animation: drift 18s ease-in-out infinite;
+    }
+    .blob-1 { width: 34rem; height: 34rem; background: #a7f3d0; top: -10rem; left: -8rem; }
+    .blob-2 { width: 28rem; height: 28rem; background: #bfdbfe; top: -4rem; right: -6rem; animation-delay: -6s; }
+    .blob-3 { width: 24rem; height: 24rem; background: #fde68a; bottom: -10rem; left: 35%; animation-delay: -12s; }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(3rem, 2rem) scale(1.08); }
+      66%      { transform: translate(-2rem, 1rem) scale(.95); }
+    }
+
+    /* ---- Revelado al hacer scroll ---- */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ---- Tarjetas ---- */
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 1rem;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s, border-color .3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px -18px rgba(15, 23, 42, .22);
+      border-color: #a7f3d0;
+    }
+
+    /* ---- Burbujas del chat ---- */
+    .bubble { opacity: 0; transform: translateY(12px); }
+    .bubble.show { animation: pop .45s cubic-bezier(.16,1,.3,1) forwards; }
+    @keyframes pop { to { opacity: 1; transform: none; } }
+
+    .typing span {
+      display: inline-block; width: .4rem; height: .4rem; border-radius: 50%;
+      background: #94a3b8; margin-right: .18rem; animation: blink 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
+
+    /* ---- Semáforo ---- */
+    .lamp { animation: pulse-ring 2.2s ease-out infinite; }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, .45); }
+      70%  { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    .underline-em {
+      background-image: linear-gradient(transparent 62%, #6ee7b7 62%);
+      background-size: 0% 100%; background-repeat: no-repeat;
+      transition: background-size .8s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal.in .underline-em, h1 .underline-em { background-size: 100% 100%; }
+
+    .cta-glow { box-shadow: 0 10px 30px -10px rgba(5, 150, 105, .6); }
+    .cta-glow:hover { box-shadow: 0 16px 40px -12px rgba(5, 150, 105, .75); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blob, .lamp, .typing span { animation: none; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .bubble { opacity: 1; transform: none; }
+      html { scroll-behavior: auto; }
+    }
   </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body class="antialiased">
+
+  <!-- Barra superior -->
+  <header class="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-slate-200/70">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#" class="text-lg font-extrabold tracking-tight">Auto<span class="text-emerald-600">Data</span></a>
+      <nav class="hidden md:flex items-center gap-7 text-sm text-slate-600">
+        <a href="#problema" class="hover:text-slate-900 transition-colors">El problema</a>
+        <a href="#producto" class="hover:text-slate-900 transition-colors">Qué hace</a>
+        <a href="#demo" class="hover:text-slate-900 transition-colors">Demo</a>
+        <a href="#fuentes" class="hover:text-slate-900 transition-colors">Fuentes</a>
+      </nav>
+      <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+         class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+        Probar gratis
+      </a>
+    </div>
+  </header>
 
   <!-- Hero -->
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-gray-950 to-emerald-900/20"></div>
-    <div class="relative max-w-4xl mx-auto px-6 py-24 text-center">
-      <p class="text-emerald-400 font-mono text-sm tracking-widest mb-4 fade-in">CROMA GOV-TECH HACKATHON 2026</p>
-      <h1 class="text-5xl md:text-6xl font-bold mb-6 fade-in">
-        Auto<span class="text-emerald-400">Data</span>
-      </h1>
-      <p class="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-8 fade-in-delay">
-        Verifica un auto usado en Perú con una sola placa.
-        <br>Veredicto, alertas y precio justo — en menos de un minuto.
-      </p>
-      <a href="https://t.me/autodata_peru_bot" target="_blank"
-         class="inline-block bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold px-8 py-4 rounded-xl text-lg transition-colors fade-in-delay-2">
-        Probar en Telegram →
-      </a>
+  <section class="relative overflow-hidden border-b border-slate-200">
+    <div class="mesh">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+
+    <div class="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-14 items-center">
+      <div>
+        <span class="inline-flex items-center gap-2 bg-white/70 border border-emerald-200 text-emerald-700 text-xs font-mono tracking-widest px-3 py-1.5 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          CROMA GOV-TECH HACKATHON 2026
+        </span>
+
+        <h1 class="mt-6 text-4xl md:text-6xl font-extrabold leading-[1.08] tracking-tight">
+          Verifica el auto
+          <span class="text-emerald-600">y al vendedor</span><br>
+          con una sola <span class="underline-em">placa</span>.
+        </h1>
+
+        <p class="mt-6 text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
+          Te devolvemos una <strong class="text-slate-900">decisión</strong> y un
+          <strong class="text-slate-900">precio justo</strong> — no un reporte de 20 páginas.
+          En menos de un minuto, desde Telegram.
+        </p>
+
+        <div class="mt-9 flex flex-wrap items-center gap-4">
+          <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+             class="cta-glow inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-7 py-4 rounded-xl text-lg transition-all hover:-translate-y-0.5">
+            Probar en Telegram
+            <span aria-hidden="true">→</span>
+          </a>
+          <a href="#demo" class="text-slate-700 font-semibold px-5 py-4 rounded-xl hover:bg-slate-100 transition-colors">
+            Ver cómo funciona
+          </a>
+        </div>
+
+        <!-- Métricas -->
+        <div class="mt-12 grid grid-cols-3 gap-6 max-w-lg">
+          <div>
+            <p class="text-3xl font-extrabold text-slate-900" data-count="6">0</p>
+            <p class="text-xs text-slate-500 mt-1 leading-tight">fuentes oficiales<br>en paralelo</p>
+          </div>
+          <div>
+            <p class="text-3xl font-extrabold text-slate-900"><span data-count="60">0</span>s</p>
+            <p class="text-xs text-slate-500 mt-1 leading-tight">o menos por<br>consulta</p>
+          </div>
+          <div>
+            <p class="text-3xl font-extrabold text-slate-900"><span data-count="20">0</span>+</p>
+            <p class="text-xs text-slate-500 mt-1 leading-tight">portales que<br>ya no revisas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="relative mx-auto w-full max-w-[21rem]">
+        <div class="rounded-[2.2rem] border-8 border-slate-900 bg-slate-900 shadow-2xl overflow-hidden">
+          <div class="bg-white">
+            <div class="bg-emerald-600 text-white px-4 py-3 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-white/25 grid place-items-center text-sm font-bold">AD</div>
+              <div>
+                <p class="text-sm font-semibold leading-tight">AutoData Perú</p>
+                <p class="text-[11px] text-emerald-100 leading-tight">en línea</p>
+              </div>
+            </div>
+            <div id="chat" class="px-3 py-4 space-y-2.5 h-[25rem] overflow-hidden bg-slate-50 text-[13px]"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- Problema -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-4">El problema</h2>
-    <p class="text-gray-400 text-lg leading-relaxed">
-      Comprar un auto usado en Perú obliga a revisar <strong class="text-gray-200">más de 20 portales del Estado</strong>,
-      cada uno con su propio captcha y su propia jerga. El resultado: el comprador promedio
-      <strong class="text-gray-200">no hace la verificación</strong> — o paga para que otro la haga.
-    </p>
-    <p class="text-gray-500 mt-4 text-sm">
-      La "consulta vehicular gratuita" más buscada del país es un directorio de 35 enlaces.
-      No consulta nada: el usuario hace los clics. Nadie paga por datos — pagan por no tener que usar una interfaz.
-    </p>
+  <section id="problema" class="max-w-6xl mx-auto px-6 py-24">
+    <div class="reveal max-w-3xl">
+      <p class="text-emerald-600 font-mono text-xs tracking-widest mb-3">EL PROBLEMA</p>
+      <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-6">
+        Nadie paga por datos. Pagan por <span class="underline-em">no usar 20 portales</span>.
+      </h2>
+      <p class="text-lg text-slate-600 leading-relaxed">
+        Comprar un auto usado en Perú obliga a revisar <strong class="text-slate-900">más de 20 portales del Estado</strong>,
+        cada uno con su propio captcha y su propia jerga. El resultado: el comprador promedio
+        <strong class="text-slate-900">no hace la verificación</strong> — o paga para que otro la haga.
+      </p>
+    </div>
+
+    <div class="reveal mt-10 grid md:grid-cols-3 gap-5">
+      <div class="card p-6">
+        <p class="text-4xl font-extrabold text-slate-900">35</p>
+        <p class="text-sm text-slate-600 mt-2">enlaces tiene la "consulta vehicular gratuita" más buscada del país. No consulta nada: tú haces los clics.</p>
+      </div>
+      <div class="card p-6">
+        <p class="text-4xl font-extrabold text-slate-900">S/ 35</p>
+        <p class="text-sm text-slate-600 mt-2">es lo que cobran por WhatsApp para hacer esos mismos clics por ti.</p>
+      </div>
+      <div class="card p-6">
+        <p class="text-4xl font-extrabold text-emerald-600">1</p>
+        <p class="text-sm text-slate-600 mt-2">mensaje es todo lo que pedimos nosotros. La placa, y listo.</p>
+      </div>
+    </div>
   </section>
 
   <!-- Qué hace -->
-  <section class="bg-gray-900/50 py-16">
-    <div class="max-w-4xl mx-auto px-6">
-      <h2 class="text-3xl font-bold mb-10 text-center">Qué hace AutoData</h2>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">🔍</div>
-          <h3 class="font-bold text-lg mb-2">Veredicto claro</h3>
-          <p class="text-gray-400 text-sm">
-            <span class="text-emerald-400 font-bold">COMPRA</span>,
-            <span class="text-yellow-400 font-bold">OJO</span> o
-            <span class="text-red-400 font-bold">NO COMPRES</span>.
-            No una tabla de datos — una decisión.
+  <section id="producto" class="bg-slate-50 border-y border-slate-200 py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="reveal text-center max-w-2xl mx-auto mb-14">
+        <p class="text-emerald-600 font-mono text-xs tracking-widest mb-3">QUÉ HACE AUTODATA</p>
+        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Tres cosas que nadie te da juntas</h2>
+      </div>
+
+      <div class="reveal grid md:grid-cols-3 gap-6">
+        <div class="card p-8">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 grid place-items-center text-2xl mb-5">🚦</div>
+          <h3 class="font-bold text-xl mb-3">Un veredicto claro</h3>
+          <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            No una tabla de datos — una decisión que puedes tomar.
           </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700">COMPRA</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-100 text-amber-700">OJO</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-red-100 text-red-700">NO COMPRES</span>
+          </div>
         </div>
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">👤</div>
-          <h3 class="font-bold text-lg mb-2">Verifica al vendedor</h3>
-          <p class="text-gray-400 text-sm">
+
+        <div class="card p-8">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 grid place-items-center text-2xl mb-5">🧑</div>
+          <h3 class="font-bold text-xl mb-3">Verifica al vendedor</h3>
+          <p class="text-slate-600 text-sm leading-relaxed">
             Detecta si quien dice ser "particular" en realidad tiene RUC de venta de vehículos.
-            <strong class="text-gray-300">Nadie más en Perú hace esto.</strong>
+          </p>
+          <p class="mt-4 text-sm font-semibold text-slate-900">Nadie más en Perú hace esto.</p>
+        </div>
+
+        <div class="card p-8">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 grid place-items-center text-2xl mb-5">💰</div>
+          <h3 class="font-bold text-xl mb-3">Precio justo en soles</h3>
+          <p class="text-slate-600 text-sm leading-relaxed">
+            Convierte papeletas, deudas y siniestros a soles de descuento. Te decimos cuánto ofrecer
+            y te damos el mensaje listo para el vendedor.
           </p>
         </div>
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">💰</div>
-          <h3 class="font-bold text-lg mb-2">Precio justo en soles</h3>
-          <p class="text-gray-400 text-sm">
-            Convierte papeletas, deudas y siniestros a soles de descuento.
-            Te dice cuánto ofrecer y te da el mensaje para el vendedor.
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section id="demo" class="max-w-5xl mx-auto px-6 py-24">
+    <div class="reveal text-center max-w-2xl mx-auto mb-14">
+      <p class="text-emerald-600 font-mono text-xs tracking-widest mb-3">ASÍ DE SIMPLE</p>
+      <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Escribes como hablas</h2>
+      <p class="text-slate-600 mt-4">Sin formularios. Sin captchas. Un mensaje.</p>
+    </div>
+
+    <div class="reveal card overflow-hidden">
+      <div class="border-b border-slate-200 px-6 py-4 bg-slate-50 flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-red-400"></span>
+        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+        <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+        <span class="ml-3 text-xs text-slate-500 font-mono">@autodata_peru_bot</span>
+      </div>
+
+      <div class="p-6 md:p-8 space-y-4">
+        <div class="flex justify-end">
+          <p class="bg-emerald-600 text-white px-4 py-2.5 rounded-2xl rounded-br-sm text-sm max-w-md">
+            ABC-123 me lo dan a 32 mil
           </p>
+        </div>
+
+        <div class="space-y-2 max-w-lg">
+          <p class="bg-slate-100 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm">
+            ✅ SOAT vigente — Mapfre, vence 10/2026 <span class="text-slate-400">(APESEG)</span>
+          </p>
+          <p class="bg-slate-100 px-4 py-2.5 rounded-2xl text-sm">
+            ⚠️ 2 choques reportados en 5 años <span class="text-slate-400">(SBS)</span>
+          </p>
+          <p class="bg-slate-100 px-4 py-2.5 rounded-2xl text-sm">
+            ⚠️ S/ 1,840 en papeletas <span class="text-slate-400">(SUTRAN)</span>
+          </p>
+          <p class="bg-red-50 border border-red-200 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm font-semibold text-red-700">
+            🛑 Orden de captura vigente <span class="font-normal text-red-400">(SAT Lima)</span>
+          </p>
+        </div>
+
+        <div class="rounded-xl border-2 border-red-200 bg-red-50 p-5 flex items-start gap-4">
+          <span class="lamp w-3.5 h-3.5 rounded-full bg-red-500 mt-1.5 shrink-0"></span>
+          <div>
+            <p class="font-extrabold text-red-700 text-lg tracking-tight">VEREDICTO: NO COMPRES</p>
+            <p class="text-sm text-red-600/90 mt-1">Este auto puede ser internado en cualquier momento.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Fuentes -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-8 text-center">Fuentes oficiales consultadas</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-      {% for src in sources %}
-      <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-800">
-        <p class="font-mono text-emerald-400 text-sm">{{ src.name }}</p>
-        <p class="text-gray-500 text-xs mt-1">{{ src.desc }}</p>
+  <section id="fuentes" class="bg-slate-50 border-y border-slate-200 py-24">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="reveal text-center mb-12">
+        <p class="text-emerald-600 font-mono text-xs tracking-widest mb-3">DATOS OFICIALES</p>
+        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Seis fuentes del Estado, en paralelo</h2>
       </div>
-      {% endfor %}
-    </div>
-    <p class="text-center text-gray-600 text-sm mt-6">
-      Todas las consultas vía <strong class="text-gray-400">Croma API</strong> — la plataforma de datos de gobierno.
-    </p>
-  </section>
 
-  <!-- Cómo funciona -->
-  <section class="bg-gray-900/50 py-16">
-    <div class="max-w-2xl mx-auto px-6">
-      <h2 class="text-3xl font-bold mb-10 text-center">Así de simple</h2>
-      <div class="bg-gray-800 rounded-2xl p-6 font-mono text-sm border border-gray-700 space-y-4">
-        <div class="flex items-start gap-3">
-          <span class="text-blue-400 shrink-0">Tú:</span>
-          <span class="text-gray-300">ABC-123 me lo dan a 32 mil</span>
+      <div class="reveal grid grid-cols-2 md:grid-cols-3 gap-4">
+        {% for src in sources %}
+        <div class="card p-5 text-center">
+          <p class="font-mono text-emerald-600 font-bold">{{ src.name }}</p>
+          <p class="text-slate-500 text-xs mt-1.5">{{ src.desc }}</p>
         </div>
-        <div class="space-y-2">
-          <div class="flex items-start gap-3">
-            <span class="text-emerald-400 shrink-0">Bot:</span>
-            <span class="text-gray-400">✅ SOAT vigente — Mapfre, vence 10/2026 <span class="text-gray-600">(APESEG)</span></span>
-          </div>
-          <div class="pl-12 text-gray-400">⚠️ 2 choques reportados en 5 años <span class="text-gray-600">(SBS)</span></div>
-          <div class="pl-12 text-gray-400">⚠️ S/ 1,840 en papeletas <span class="text-gray-600">(SUTRAN)</span></div>
-          <div class="pl-12 text-red-400 font-bold">🛑 Orden de captura vigente <span class="text-gray-600 font-normal">(SAT Lima)</span></div>
-        </div>
-        <div class="border-t border-gray-700 pt-3">
-          <p class="text-red-400 font-bold">VEREDICTO: NO COMPRES</p>
-          <p class="text-gray-500 text-xs mt-1">Este auto puede ser internado en cualquier momento.</p>
-        </div>
+        {% endfor %}
       </div>
+
+      <p class="reveal text-center text-slate-500 text-sm mt-8">
+        Todas las consultas vía <strong class="text-slate-700">Croma API</strong> — la plataforma de datos de gobierno.
+      </p>
     </div>
   </section>
 
   <!-- Honestidad -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-4">Lo que NO hacemos</h2>
-    <p class="text-gray-400 mb-6">Preferimos un producto honesto a uno que promete de más.</p>
-    <ul class="space-y-2 text-gray-500">
-      <li>❌ No consultamos <strong class="text-gray-400">SUNARP</strong> — no tenemos cadena de propietarios ni reportes de robo.</li>
-      <li>❌ No consultamos <strong class="text-gray-400">MTC</strong> — no tenemos revisión técnica.</li>
-      <li>❌ No reemplazamos una inspección mecánica presencial.</li>
-      <li>❌ No damos asesoría legal.</li>
-    </ul>
+  <section class="max-w-5xl mx-auto px-6 py-24">
+    <div class="reveal grid md:grid-cols-2 gap-12 items-start">
+      <div>
+        <p class="text-slate-400 font-mono text-xs tracking-widest mb-3">HONESTIDAD</p>
+        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Lo que <span class="text-red-500">no</span> hacemos</h2>
+        <p class="text-slate-600">Preferimos un producto honesto a uno que promete de más.</p>
+        <a href="/limites" class="inline-flex items-center gap-1.5 mt-6 text-emerald-700 font-semibold hover:gap-2.5 transition-all">
+          Ver límites y roadmap <span aria-hidden="true">→</span>
+        </a>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex gap-3 items-start"><span class="text-red-400 mt-0.5">✕</span><span class="text-slate-600">No consultamos <strong class="text-slate-900">SUNARP</strong> — sin cadena de propietarios ni reportes de robo.</span></li>
+        <li class="flex gap-3 items-start"><span class="text-red-400 mt-0.5">✕</span><span class="text-slate-600">No consultamos <strong class="text-slate-900">MTC</strong> — sin revisión técnica.</span></li>
+        <li class="flex gap-3 items-start"><span class="text-red-400 mt-0.5">✕</span><span class="text-slate-600">No reemplazamos una inspección mecánica presencial.</span></li>
+        <li class="flex gap-3 items-start"><span class="text-red-400 mt-0.5">✕</span><span class="text-slate-600">No damos asesoría legal.</span></li>
+      </ul>
+    </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="border-t border-gray-800 py-8">
-    <div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 text-sm">
+  <!-- CTA final -->
+  <section class="bg-emerald-600 py-20">
+    <div class="reveal max-w-3xl mx-auto px-6 text-center text-white">
+      <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-5">¿Vas a comprar un auto?</h2>
+      <p class="text-emerald-50 text-lg mb-9">Revísalo antes. Toma un minuto y es gratis.</p>
+      <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-xl text-lg hover:-translate-y-0.5 transition-transform shadow-xl">
+        Abrir en Telegram <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
+
+  <footer class="py-10 border-t border-slate-200">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-slate-500 text-sm">
       <p>AutoData · Hackathon GOV-TECH Croma 2026</p>
-      <p>Hecho con <a href="https://usecroma.com" class="text-emerald-500 hover:underline" target="_blank">Croma API</a></p>
+      <p>Hecho con <a href="https://usecroma.com" target="_blank" rel="noopener" class="text-emerald-600 font-medium hover:underline">Croma API</a></p>
     </div>
   </footer>
+
+  <script>
+    // Revelado al hacer scroll.
+    // Failsafe: si IntersectionObserver no existe o nunca dispara (pestaña en segundo
+    // plano, proyector, navegador viejo), el contenido se muestra igual a los 2 s.
+    // Una landing que se proyecta en una demo NUNCA puede quedarse en blanco.
+    const revealAll = () => document.querySelectorAll('.reveal').forEach((el) => el.classList.add('in'));
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.15 });
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+      setTimeout(revealAll, 2000);
+    } else {
+      revealAll();
+    }
+
+    // Contadores del hero.
+    function runCounter(el) {
+      if (el.dataset.done) return;
+      el.dataset.done = '1';
+      const target = +el.dataset.count;
+      let n = 0;
+      const step = Math.max(1, Math.round(target / 28));
+      const t = setInterval(() => {
+        n += step;
+        if (n >= target) { n = target; clearInterval(t); }
+        el.textContent = n;
+      }, 28);
+    }
+
+    if ('IntersectionObserver' in window) {
+      const counters = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { runCounter(e.target); counters.unobserve(e.target); } });
+      }, { threshold: 0.6 });
+      document.querySelectorAll('[data-count]').forEach((el) => counters.observe(el));
+    }
+    // Failsafe: los números nunca se quedan en 0.
+    setTimeout(() => document.querySelectorAll('[data-count]').forEach(runCounter), 2000);
+
+    // Conversación animada del teléfono (se repite en bucle).
+    const chat = document.getElementById('chat');
+    const script = [
+      { who: 'me',  html: 'ABC-123 me lo dan a 32 mil' },
+      { who: 'bot', html: '🔎 Revisando 6 fuentes oficiales…', typing: true },
+      { who: 'bot', html: '✅ SOAT vigente <span class="text-slate-400">(APESEG)</span>' },
+      { who: 'bot', html: '⚠️ 2 choques en 5 años <span class="text-slate-400">(SBS)</span>' },
+      { who: 'bot', html: '⚠️ S/ 1,840 en papeletas <span class="text-slate-400">(SUTRAN)</span>' },
+      { who: 'bot', html: '🛑 <b>Orden de captura vigente</b> <span class="text-slate-400">(SAT Lima)</span>', danger: true },
+      { who: 'bot', html: '<b>NO COMPRES</b><br><span class="text-xs">Puede ser internado en cualquier momento.</span>', verdict: true },
+    ];
+
+    function bubble(item) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bubble flex ' + (item.who === 'me' ? 'justify-end' : 'justify-start');
+      const b = document.createElement('div');
+      if (item.who === 'me') {
+        b.className = 'bg-emerald-600 text-white px-3.5 py-2 rounded-2xl rounded-br-sm max-w-[85%]';
+      } else if (item.verdict) {
+        b.className = 'bg-red-600 text-white px-3.5 py-2.5 rounded-2xl rounded-bl-sm max-w-[85%]';
+      } else if (item.danger) {
+        b.className = 'bg-red-50 border border-red-200 text-red-700 px-3.5 py-2 rounded-2xl max-w-[90%]';
+      } else {
+        b.className = 'bg-white border border-slate-200 px-3.5 py-2 rounded-2xl rounded-bl-sm max-w-[90%]';
+      }
+      b.innerHTML = item.typing
+        ? '<span class="typing"><span></span><span></span><span></span></span> ' + item.html
+        : item.html;
+      wrap.appendChild(b);
+      return wrap;
+    }
+
+    async function playChat() {
+      while (true) {
+        chat.innerHTML = '';
+        for (const item of script) {
+          const el = bubble(item);
+          chat.appendChild(el);
+          requestAnimationFrame(() => el.classList.add('show'));
+          chat.scrollTop = chat.scrollHeight;
+          await new Promise((r) => setTimeout(r, item.who === 'me' ? 900 : 1100));
+        }
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+    }
+
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      playChat();
+    } else {
+      script.forEach((i) => { const el = bubble(i); el.classList.add('show'); chat.appendChild(el); });
+    }
+  </script>
 
 </body>
 </html>
