@@ -23,31 +23,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": {
-            "type": "client_error" if exc.status_code < 500 else "server_error",
-            "code": str(exc.detail) if isinstance(exc.detail, str) else "error",
-            "message": str(exc.detail),
-            "requestId": str(uuid.uuid4()),
-        }},
-    )
-
-
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"error": {
-            "type": "server_error",
-            "code": "internal_error",
-            "message": "Error interno del servidor",
-            "requestId": str(uuid.uuid4()),
-        }},
-    )
+app.add_middleware(ObservabilityMiddleware)
 
 
 app.include_router(health_router, prefix="/api/v1")

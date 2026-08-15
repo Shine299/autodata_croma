@@ -10,8 +10,8 @@ Claves y {placeholders} sin cambios respecto al placeholder original de P3.
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from app.bot.api_client import VerificationApiError, create_verification
-from app.bot.formatters import format_verdict
+from app.bot.api_client import VerificationApiError, create_verification, create_appraisal
+from app.bot.formatters import format_verdict, format_appraisal
 from app.bot.job_client import poll_job, start_async_verification
 from app.bot.keyboards import (
     CB_APPRAISE,
@@ -69,13 +69,14 @@ _API_ERROR = (
 _PROGRESS = "🔎 Consultando *{source}*…"
 
 
-def next_state(current: State, extracted, context: dict) -> tuple[State, dict, str]:
+def next_state(current: State, extracted, context: dict, text: str = "") -> tuple[State, dict, str]:
     """Tabla de transiciones (lógica de negocio, decidida a mano — no delegada).
 
     Devuelve (nuevo_estado, nuevo_contexto, texto_de_respuesta). Función pura:
     no toca la red ni la base, para poder testearla aislada.
     """
     context = dict(context)
+    text_lower = text.lower()
 
     # Una placa nueva en cualquier momento (re)inicia el flujo del vehículo.
     if extracted.plate:
@@ -87,7 +88,28 @@ def next_state(current: State, extracted, context: dict) -> tuple[State, dict, s
 
     if current is State.AWAITING_PRICE and extracted.asking_price:
         context["asking_price"] = extracted.asking_price
+        if context.get("vid"):
+            return State.APPRAISAL_READY, context, "Calculando tasación justa..."
         return State.DONE, context, _DONE.format(plate=context.get("plate", "?"), price=extracted.asking_price)
+
+    # Flujo de vendedor (D-08)
+    if current is State.AWAITING_SELLER_CONSENT:
+        has_consent = "si" in text_lower.split() or "sí" in text_lower.split() or "si" == text_lower.strip() or "sí" == text_lower.strip()
+        doc = extracted.document_number
+        if has_consent and doc:
+            context["seller"] = {
+                "documentType": "DNI",
+                "documentNumber": doc,
+                "claimedRole": "PARTICULAR",
+                "consent": True
+            }
+            return State.DONE, context, "Revisando al vendedor y actualizando el veredicto..."
+        elif doc and not has_consent:
+            return current, context, "Tengo el documento. Para poder consultarlo, respóndeme explícitamente con un *sí*."
+        elif has_consent and not doc:
+            return current, context, "Permiso registrado. ¿Cuál es el número de documento (DNI) del vendedor?"
+        else:
+            return current, context, "Para consultar al vendedor necesito el número de documento y que me respondas explícitamente que *sí* autorizas."
 
     # No entendimos nada útil: pedimos una placa y no cambiamos de estado.
     return current, context, _ASK_PLATE
@@ -104,9 +126,15 @@ async def _deliver_verdict(message, ctx: dict) -> None:
         data = await create_verification(
             plate=ctx.get("plate"),
             asking_price=ctx.get("asking_price"),
+            seller=ctx.get("seller"),
         )
-    except VerificationApiError:
-        await message.reply_text(_API_ERROR, parse_mode="Markdown")
+    except VerificationApiError as exc:
+        if exc.status_code == 429:
+            await message.reply_text("😕 Por el momento hemos alcanzado el límite de consultas al Estado. Inténtalo de nuevo en un momento.", parse_mode="Markdown")
+        elif exc.status_code and 400 <= exc.status_code < 500:
+            await message.reply_text(f"⚠️ {exc}", parse_mode="Markdown")
+        else:
+            await message.reply_text(_API_ERROR, parse_mode="Markdown")
         return
 
     await _send_verdict(message, data)
@@ -133,7 +161,7 @@ async def _deliver_verdict_progressive(message, ctx: dict) -> None:
     price = ctx.get("asking_price")
 
     try:
-        job_id = await start_async_verification(plate, asking_price=price)
+        job_id = await start_async_verification(plate, asking_price=price, seller=ctx.get("seller"))
     except VerificationApiError:
         # El endpoint async no respondió → fallback al camino síncrono (D-04).
         await _deliver_verdict(message, ctx)
@@ -144,11 +172,32 @@ async def _deliver_verdict_progressive(message, ctx: dict) -> None:
 
     try:
         data = await poll_job(job_id, _on_source)
-    except VerificationApiError:
-        await message.reply_text(_API_ERROR, parse_mode="Markdown")
+    except VerificationApiError as exc:
+        if exc.status_code == 429:
+            await message.reply_text("😕 Por el momento hemos alcanzado el límite de consultas al Estado. Inténtalo de nuevo en un momento.", parse_mode="Markdown")
+        elif exc.status_code and 400 <= exc.status_code < 500:
+            await message.reply_text(f"⚠️ {exc}", parse_mode="Markdown")
+        else:
+            await message.reply_text(_API_ERROR, parse_mode="Markdown")
         return
 
     await _send_verdict(message, data)
+
+
+async def _deliver_appraisal(message, ctx: dict) -> None:
+    """D-09: Llama a POST /verifications/{id}/appraisals y formatea el script."""
+    vid = ctx.get("vid")
+    price = ctx.get("asking_price")
+    try:
+        data = await create_appraisal(verification_id=vid, asking_price=price)
+    except VerificationApiError as exc:
+        if exc.status_code and 400 <= exc.status_code < 500:
+            await message.reply_text(f"⚠️ {exc}", parse_mode="Markdown")
+        else:
+            await message.reply_text(_API_ERROR, parse_mode="Markdown")
+        return
+
+    await message.reply_text(format_appraisal(data), parse_mode="Markdown")
 
 
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -160,7 +209,7 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         repo = ConversationRepository(session)
         state, ctx = await repo.get(chat_id)
         extracted = parse_free_text(text)
-        new_state, new_ctx, reply = next_state(state, extracted, ctx)
+        new_state, new_ctx, reply = next_state(state, extracted, ctx, text)
         await repo.set(chat_id, new_state, new_ctx)
 
     await update.message.reply_text(reply, parse_mode="Markdown")
@@ -169,6 +218,8 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # (con fallback síncrono D-04 si el modo async no está disponible).
     if new_state is State.DONE:
         await _deliver_verdict_progressive(update.message, new_ctx)
+    elif new_state is State.APPRAISAL_READY:
+        await _deliver_appraisal(update.message, new_ctx)
 
 
 # --- D-07: botones inline -------------------------------------------------
@@ -203,6 +254,8 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await repo.reset(chat_id)
         elif action in _CB_NEXT_STATE:
             state, ctx = await repo.get(chat_id)
+            if action in (CB_APPRAISE, CB_SELLER) and vid:
+                ctx["vid"] = vid
             await repo.set(chat_id, _CB_NEXT_STATE[action], ctx)
 
     reply = _CB_REPLIES.get(action, "Opción no reconocida.").format(vid=vid or "—")
