@@ -4,145 +4,712 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoData — Verifica antes de comprar</title>
+  <meta name="description" content="Verifica un auto usado en Perú con una sola placa. Veredicto, alertas y precio justo en menos de un minuto.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { animation: fade-in 0.6s ease-out both; }
-    .fade-in-delay { animation: fade-in 0.6s ease-out 0.2s both; }
-    .fade-in-delay-2 { animation: fade-in 0.6s ease-out 0.4s both; }
+    /* ── Sistema tipográfico ───────────────────────────────────────────
+       Tracking negativo + interlineado apretado + pesos medios (no 800).
+       Es la diferencia entre "plantilla" y producto cuidado.            */
+    :root {
+      --ink:    #0a0f1c;
+      --ink-2:  #4b5666;
+      --line:   #e8ebef;
+      --paper:  #fbfbfa;
+      --em:     #00875a;
+      --navy:   #0a0f1c;
+    }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      background: #fff; color: var(--ink);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-feature-settings: "cv02","cv03","cv04","ss01";
+    }
+
+    .display {
+      font-weight: 560;
+      letter-spacing: -0.035em;
+      line-height: 0.98;
+    }
+    .h2 {
+      font-weight: 560;
+      letter-spacing: -0.028em;
+      line-height: 1.05;
+    }
+    .lede { letter-spacing: -0.011em; line-height: 1.5; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+    /* ── Encabezado de sección ─────────────────────────────────────────
+       El número es el ancla visual (verde, el único acento de la línea) y
+       la regla horizontal da ritmo al hacer scroll. Antes número y etiqueta
+       tenían el mismo peso, así que ninguno anclaba. */
+    .kicker { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+    .kicker-num {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .8125rem; color: var(--em); font-variant-numeric: tabular-nums;
+    }
+    .kicker-rule { height: 1px; width: 2rem; background: var(--line); flex: none; }
+    .kicker-label {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .6875rem; letter-spacing: .14em; color: var(--ink-2); text-transform: uppercase;
+    }
+
+    /* Ítem de lista con marca en vez de número: evita chocar con la numeración
+       de las secciones (había dos sistemas 01–04 distintos en la misma página). */
+    .mark {
+      flex: none; width: 1.375rem; height: 1.375rem; border-radius: .4375rem;
+      display: grid; place-content: center; font-size: .75rem; margin-top: .125rem;
+    }
+    .mark-no { background: #fff1f2; color: #e11d48; }
+    .mark-go { background: #ecfdf5; color: var(--em); }
+
+    /* ── Grano sutil: le quita el plano de "CSS puro" ── */
+    .grain::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ── Aurora del hero ── */
+    .aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .aurora i {
+      position: absolute; display: block; border-radius: 9999px;
+      filter: blur(80px); opacity: .55; animation: float 22s ease-in-out infinite;
+    }
+    .a1 { width: 40rem; height: 30rem; background: #b9f4dd; top: -12rem; left: -10rem; }
+    .a2 { width: 32rem; height: 26rem; background: #cfe0ff; top: -6rem; right: -8rem; animation-delay: -8s; }
+    .a3 { width: 26rem; height: 22rem; background: #ffe8b8; bottom: -12rem; left: 30%; animation-delay: -15s; }
+    @keyframes float {
+      0%,100% { transform: translate3d(0,0,0) scale(1); }
+      33%     { transform: translate3d(4rem,2rem,0) scale(1.1); }
+      66%     { transform: translate3d(-3rem,1rem,0) scale(.94); }
+    }
+
+    /* ── Revelado escalonado ── */
+    .rv { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+    .rv.in { opacity: 1; transform: none; }
+    .rv[data-d="1"] { transition-delay: .08s; }
+    .rv[data-d="2"] { transition-delay: .16s; }
+    .rv[data-d="3"] { transition-delay: .24s; }
+    .rv[data-d="4"] { transition-delay: .32s; }
+
+    /* ── Bento ── */
+    .bento {
+      background: #fff; border: 1px solid var(--line); border-radius: 1.25rem; position: relative; overflow: hidden;
+      transition: transform .45s cubic-bezier(.16,1,.3,1), box-shadow .45s, border-color .45s;
+    }
+    .bento:hover { transform: translateY(-4px); box-shadow: 0 24px 50px -26px rgba(10,15,28,.28); border-color: #cdd4dd; }
+    .bento-dark { background: var(--navy); border-color: #1b2436; color: #fff; }
+
+    /* ── Marquee de fuentes ── */
+    .marquee { display: flex; gap: 1rem; width: max-content; animation: slide 30s linear infinite; }
+    .marquee-wrap:hover .marquee { animation-play-state: paused; }
+    @keyframes slide { to { transform: translateX(-50%); } }
+
+    /* ── Chat ── */
+    .bub { opacity: 0; transform: translateY(10px) scale(.98); }
+    .bub.show { animation: bpop .5s cubic-bezier(.16,1,.3,1) forwards; }
+    @keyframes bpop { to { opacity: 1; transform: none; } }
+    .dots i { display: inline-block; width: .35rem; height: .35rem; border-radius: 50%; background: #9aa4b2; margin-right: .16rem; animation: blink 1.3s infinite; }
+    .dots i:nth-child(2) { animation-delay: .18s; }
+    .dots i:nth-child(3) { animation-delay: .36s; }
+    @keyframes blink { 0%,60%,100% { opacity:.25 } 30% { opacity:1 } }
+
+    .ring { animation: ring 2.4s ease-out infinite; }
+    @keyframes ring {
+      0%   { box-shadow: 0 0 0 0 rgba(225,29,72,.5); }
+      70%  { box-shadow: 0 0 0 16px rgba(225,29,72,0); }
+      100% { box-shadow: 0 0 0 0 rgba(225,29,72,0); }
+    }
+
+    .link-arrow span { transition: transform .3s cubic-bezier(.16,1,.3,1); display: inline-block; }
+    .link-arrow:hover span { transform: translateX(4px); }
+
+    /* ── Navbar ────────────────────────────────────────────────────────
+       Ligero (60px), cristal esmerilado, y una sombra que sólo aparece
+       cuando la página se ha desplazado: en el tope se funde con el hero. */
+    .nav {
+      transition: box-shadow .35s ease, border-color .35s ease, background-color .35s ease;
+      border-bottom: 1px solid transparent;
+    }
+    .nav.scrolled {
+      border-bottom-color: var(--line);
+      box-shadow: 0 1px 24px -12px rgba(10,15,28,.18);
+    }
+
+    /* Enlace secundario.
+       UN solo cambio al hover (fondo), no tres a la vez: el subrayado + fondo +
+       color simultáneos leían como ruido. El color se reserva para el estado activo. */
+    .nav-link {
+      position: relative; display: inline-flex; align-items: center;
+      padding: .5rem .75rem; border-radius: .625rem;
+      color: var(--ink-2);
+      transition: color .2s ease, background-color .2s ease;
+    }
+    .nav-link:hover { color: var(--ink); background-color: rgba(10,15,28,.05); }
+
+    /* Sección activa (scrollspy): punto discreto, no un subrayado que compita con el CTA. */
+    .nav-link[aria-current="true"] { color: var(--ink); }
+    .nav-link[aria-current="true"]::before {
+      content: ""; position: absolute; left: 50%; bottom: .0625rem; translate: -50% 0;
+      width: .25rem; height: .25rem; border-radius: 50%; background: var(--em);
+    }
+
+    /* CTA principal: elevación sutil que crece al hover. */
+    .nav-cta {
+      transition: background-color .2s ease, transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease;
+      box-shadow: 0 1px 2px rgba(10,15,28,.16), 0 6px 16px -8px rgba(10,15,28,.35);
+    }
+    .nav-cta:hover {
+      background-color: #1b2436; transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(10,15,28,.18), 0 12px 24px -10px rgba(10,15,28,.45);
+    }
+    .nav-cta:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(10,15,28,.2); }
+
+    /* Foco visible: la auditoría encontró CERO reglas de :focus (WCAG 2.4.7).
+       :focus-visible sólo se dibuja con teclado, no al hacer click con el mouse. */
+    .nav a:focus-visible, .nav button:focus-visible, .skip-link:focus-visible {
+      outline: 2px solid var(--em); outline-offset: 3px; border-radius: .625rem;
+    }
+    .nav-cta:focus-visible { outline-offset: 3px; }
+
+    /* Saltar al contenido: primer tab de la página para lectores de pantalla. */
+    .skip-link {
+      position: absolute; left: 1rem; top: -4rem; z-index: 60;
+      background: var(--navy); color: #fff; padding: .625rem 1rem; border-radius: .625rem;
+      font-size: .875rem; transition: top .2s ease;
+    }
+    .skip-link:focus { top: .75rem; }
+
+    /* Hamburguesa: área táctil de 44x44 (WCAG 2.5.5); los trazos van dentro. */
+    .burger { width: 2.75rem; height: 2.75rem; display: grid; place-content: center; }
+    .burger span {
+      display: block; width: 1.125rem; height: 1.5px; background: var(--ink); border-radius: 2px;
+      transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .2s ease;
+    }
+    .burger span + span { margin-top: .3125rem; }
+    .burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(.40625rem) rotate(45deg); }
+    .burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-.40625rem) rotate(-45deg); }
+
+    /* Panel móvil: se despliega con altura animada. */
+    .nav-panel {
+      overflow: hidden; max-height: 0;
+      transition: max-height .4s cubic-bezier(.16,1,.3,1), opacity .3s ease;
+      opacity: 0;
+    }
+    .nav-panel.open { max-height: 20rem; opacity: 1; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aurora i, .ring, .dots i, .marquee { animation: none; }
+      .rv { opacity: 1; transform: none; transition: none; }
+      .bub { opacity: 1; transform: none; }
+      html { scroll-behavior: auto; }
+    }
   </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body>
+
+  <a href="#main" class="skip-link">Saltar al contenido</a>
+
+  <!-- Nav -->
+  <header id="nav" class="nav sticky top-0 z-50 backdrop-blur-xl bg-white/75">
+    <div class="max-w-[76rem] mx-auto px-6">
+      <div class="h-[3.75rem] flex items-center justify-between gap-6">
+
+        <!-- Logo: ancla real, no href="#" muerto -->
+        <a href="#inicio" class="shrink-0 text-[1.0625rem] font-[560] tracking-[-.03em] py-2 hover:opacity-60 transition-opacity"
+           aria-label="AutoData — ir al inicio">
+          Auto<span class="text-[--em]">Data</span>
+        </a>
+
+        <!-- Enlaces + CTA agrupados a la derecha.
+             Sin separador: con 4 items y el espaciado correcto, la jerarquía la
+             da el peso visual del CTA. Un divisor más era ruido. -->
+        <div class="hidden md:flex items-center gap-6">
+          <nav class="flex items-center gap-1 text-[.9375rem] tracking-[-.01em]" aria-label="Navegación principal">
+            <a href="#problema" class="nav-link" data-spy="problema">Problema</a>
+            <a href="#producto" class="nav-link" data-spy="producto">Producto</a>
+            <a href="#demo"     class="nav-link" data-spy="demo">Demo</a>
+            <a href="#limites"  class="nav-link" data-spy="limites">Límites</a>
+          </nav>
+
+          <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+             class="nav-cta bg-[--navy] text-white text-[.875rem] font-medium tracking-[-.01em] px-[1.125rem] py-[.5625rem] rounded-full">
+            Probar gratis
+          </a>
+        </div>
+
+        <!-- Hamburguesa: 44x44 de área táctil (WCAG 2.5.5) -->
+        <button id="burger" type="button" class="burger md:hidden -mr-2.5 rounded-xl hover:bg-[rgba(10,15,28,.05)] transition-colors"
+                aria-expanded="false" aria-controls="nav-panel" aria-label="Abrir menú">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <!-- Panel móvil -->
+      <div id="nav-panel" class="nav-panel md:hidden">
+        <nav class="flex flex-col gap-0.5 py-3 border-t border-[--line] text-[1rem] tracking-[-.01em]" aria-label="Navegación móvil">
+          <a href="#problema" class="nav-link !px-3 !py-3" data-spy="problema">Problema</a>
+          <a href="#producto" class="nav-link !px-3 !py-3" data-spy="producto">Producto</a>
+          <a href="#demo"     class="nav-link !px-3 !py-3" data-spy="demo">Demo</a>
+          <a href="#limites"  class="nav-link !px-3 !py-3" data-spy="limites">Límites</a>
+          <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+             class="nav-cta mt-3 mb-1 bg-[--navy] text-white text-[1rem] font-medium tracking-[-.01em] px-4 py-3.5 rounded-full text-center">
+            Probar gratis
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
 
   <!-- Hero -->
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-gray-950 to-emerald-900/20"></div>
-    <div class="relative max-w-4xl mx-auto px-6 py-24 text-center">
-      <p class="text-emerald-400 font-mono text-sm tracking-widest mb-4 fade-in">CROMA GOV-TECH HACKATHON 2026</p>
-      <h1 class="text-5xl md:text-6xl font-bold mb-6 fade-in">
-        Auto<span class="text-emerald-400">Data</span>
-      </h1>
-      <p class="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-8 fade-in-delay">
-        Verifica un auto usado en Perú con una sola placa.
-        <br>Veredicto, alertas y precio justo — en menos de un minuto.
-      </p>
-      <a href="https://t.me/autodata_peru_bot" target="_blank"
-         class="inline-block bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold px-8 py-4 rounded-xl text-lg transition-colors fade-in-delay-2">
-        Probar en Telegram →
+  <section id="inicio" class="relative overflow-hidden grain">
+    <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+
+    <div class="relative max-w-[76rem] mx-auto px-6 pt-24 pb-28 grid lg:grid-cols-[1.1fr_.9fr] gap-16 items-center">
+      <div>
+        <div class="rv inline-flex items-center gap-2 bg-white/70 border border-[--line] px-3 py-1.5 rounded-full mono text-[.6875rem] tracking-[.14em] text-[--ink-2]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[--em]"></span>
+          CROMA GOV-TECH HACKATHON 2026
+        </div>
+
+        <h1 class="rv display mt-7 text-[clamp(2.75rem,6.2vw,4.75rem)]" data-d="1">
+          Verifica el auto<br>
+          <span class="text-[--em]">y a quien te lo vende.</span>
+        </h1>
+
+        <p class="rv lede mt-7 text-[1.1875rem] text-[--ink-2] max-w-[34rem]" data-d="2">
+          Una placa. Seis fuentes oficiales en paralelo. Te devolvemos una
+          <span class="text-[--ink] font-medium">decisión</span> y un
+          <span class="text-[--ink] font-medium">precio justo</span> — no un reporte de veinte páginas.
+        </p>
+
+        <div class="rv mt-9 flex flex-wrap items-center gap-3" data-d="3">
+          <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+             class="link-arrow inline-flex items-center gap-2 bg-[--navy] hover:bg-[#1b2436] text-white font-medium tracking-[-.01em] px-6 py-3.5 rounded-full text-[1.0625rem] transition-colors">
+            Abrir en Telegram <span aria-hidden="true">→</span>
+          </a>
+          <a href="#demo" class="link-arrow inline-flex items-center gap-2 text-[--ink] font-medium tracking-[-.01em] px-5 py-3.5 rounded-full border border-[--line] hover:bg-[--paper] transition-colors">
+            Ver la demo <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <dl class="rv mt-14 grid grid-cols-3 gap-8 max-w-[30rem]" data-d="4">
+          <div>
+            <dt class="display text-[2.25rem]" data-count="6">0</dt>
+            <dd class="text-[.8125rem] text-[--ink-2] mt-1.5 leading-snug">fuentes en paralelo</dd>
+          </div>
+          <div>
+            <dt class="display text-[2.25rem]"><span data-count="60">0</span>s</dt>
+            <dd class="text-[.8125rem] text-[--ink-2] mt-1.5 leading-snug">o menos por consulta</dd>
+          </div>
+          <div>
+            <dt class="display text-[2.25rem]"><span data-count="20">0</span>+</dt>
+            <dd class="text-[.8125rem] text-[--ink-2] mt-1.5 leading-snug">portales que no revisas</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="rv relative mx-auto w-full max-w-[20rem]" data-d="2">
+        <div class="rounded-[2.5rem] border-[10px] border-[--navy] bg-[--navy] shadow-[0_40px_80px_-30px_rgba(10,15,28,.5)] overflow-hidden">
+          <div class="bg-white">
+            <div class="bg-[--navy] text-white px-4 py-3 flex items-center gap-3 border-b border-white/10">
+              <div class="w-8 h-8 rounded-full bg-[--em] grid place-items-center text-[.6875rem] font-semibold">AD</div>
+              <div>
+                <p class="text-[.8125rem] font-medium leading-tight tracking-[-.01em]">AutoData Perú</p>
+                <p class="text-[.6875rem] text-white/50 leading-tight">en línea</p>
+              </div>
+            </div>
+            <div id="chat" class="px-3 py-4 space-y-2 h-[24rem] overflow-hidden bg-[--paper] text-[.8125rem]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee de fuentes -->
+  <div class="marquee-wrap border-y border-[--line] py-5 overflow-hidden bg-[--paper]">
+    <div class="marquee">
+      {% for _ in range(2) %}
+        {% for src in sources %}
+        <span class="mono text-[.8125rem] text-[--ink-2] whitespace-nowrap px-5 border-r border-[--line] last:border-0">
+          {{ src.name }} <span class="text-[#a9b2bf]">· {{ src.desc }}</span>
+        </span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Problema -->
+  <section id="problema" class="scroll-mt-20 max-w-[76rem] mx-auto px-6 py-28">
+    <div class="grid lg:grid-cols-[.85fr_1.15fr] gap-14">
+      <div class="rv">
+        <div class="kicker">
+          <span class="kicker-num">01</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">El problema</span>
+        </div>
+        <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">
+          Nadie paga por datos.<br>Pagan por no usar<br>veinte portales.
+        </h2>
+      </div>
+      <div class="rv" data-d="1">
+        <p class="lede text-[1.0625rem] text-[--ink-2]">
+          Comprar un auto usado en Perú obliga a revisar más de veinte portales del Estado,
+          cada uno con su propio captcha y su propia jerga. El resultado: el comprador promedio
+          <span class="text-[--ink] font-medium">no hace la verificación</span> — o paga para que otro la haga.
+        </p>
+
+        <!-- Las cifras cuentan una historia en 3 tiempos: el costo en clics, el
+             costo en soles, y el remate — lo que pedimos nosotros. La tercera se
+             destaca a propósito: es la única que resuelve, no la que describe. -->
+        <div class="mt-10 grid sm:grid-cols-3 gap-3">
+          <div class="rounded-2xl border border-[--line] bg-white p-6">
+            <p class="display text-[2.75rem] tabular-nums">35</p>
+            <p class="text-[.8125rem] text-[--ink-2] mt-2.5 leading-snug">enlaces tiene la "consulta gratuita" más buscada. Tú haces los clics.</p>
+          </div>
+          <div class="rounded-2xl border border-[--line] bg-white p-6">
+            <p class="display text-[2.75rem] tabular-nums">S/35</p>
+            <p class="text-[.8125rem] text-[--ink-2] mt-2.5 leading-snug">cobran por WhatsApp para hacer esos clics por ti.</p>
+          </div>
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 relative">
+            <span class="mono text-[.625rem] tracking-[.14em] text-[--em] absolute top-4 right-4">AUTODATA</span>
+            <p class="display text-[2.75rem] tabular-nums text-[--em]">1</p>
+            <p class="text-[.8125rem] text-emerald-800/80 mt-2.5 leading-snug">mensaje pedimos nosotros. La placa, y listo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Producto — bento -->
+  <section id="producto" class="scroll-mt-20 bg-[--paper] border-y border-[--line] py-28">
+    <div class="max-w-[76rem] mx-auto px-6">
+      <div class="rv max-w-[38rem] mb-14">
+        <div class="kicker">
+          <span class="kicker-num">02</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Qué hace</span>
+        </div>
+        <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Tres cosas que nadie te da juntas.</h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 md:grid-rows-2 gap-4 md:h-[30rem]">
+        <!-- Veredicto: celda grande -->
+        <div class="rv bento md:col-span-2 md:row-span-2 p-9 flex flex-col justify-between">
+          <div>
+            <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2]">VEREDICTO</p>
+            <h3 class="h2 text-[1.875rem] mt-3">Una decisión, no una tabla.</h3>
+            <p class="lede text-[.9375rem] text-[--ink-2] mt-3 max-w-[26rem]">
+              Cruzamos las seis fuentes y te decimos qué hacer. Si algo no se pudo verificar, lo decimos —
+              nunca decimos que un auto está limpio a medias.
+            </p>
+          </div>
+          <div class="mt-8 grid grid-cols-3 gap-3">
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+              <span class="block w-2.5 h-2.5 rounded-full bg-emerald-500 mb-3"></span>
+              <p class="font-medium text-[.9375rem] tracking-[-.01em] text-emerald-900">COMPRA</p>
+              <p class="text-[.75rem] text-emerald-700/70 mt-0.5">Sin alertas</p>
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+              <span class="block w-2.5 h-2.5 rounded-full bg-amber-500 mb-3"></span>
+              <p class="font-medium text-[.9375rem] tracking-[-.01em] text-amber-900">OJO</p>
+              <p class="text-[.75rem] text-amber-700/70 mt-0.5">Negocia con datos</p>
+            </div>
+            <div class="rounded-xl border border-rose-200 bg-rose-50/70 p-4">
+              <span class="ring block w-2.5 h-2.5 rounded-full bg-rose-500 mb-3"></span>
+              <p class="font-medium text-[.9375rem] tracking-[-.01em] text-rose-900">NO COMPRES</p>
+              <p class="text-[.75rem] text-rose-700/70 mt-0.5">Riesgo crítico</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vendedor: oscura -->
+        <div class="rv bento bento-dark p-7 flex flex-col justify-between" data-d="1">
+          <div>
+            <p class="mono text-[.6875rem] tracking-[.14em] text-white/40">VENDEDOR</p>
+            <h3 class="h2 text-[1.375rem] mt-3 text-white">¿Particular<br>o revendedor?</h3>
+          </div>
+          <div>
+            <p class="text-[.875rem] text-white/60 leading-relaxed">
+              Detectamos si quien dice ser particular tiene RUC de venta de vehículos.
+            </p>
+            <p class="text-[.8125rem] text-[--em] font-medium mt-3">Nadie más en Perú lo hace.</p>
+          </div>
+        </div>
+
+        <!-- Precio -->
+        <div class="rv bento p-7 flex flex-col justify-between" data-d="2">
+          <div>
+            <p class="mono text-[.6875rem] tracking-[.14em] text-[--ink-2]">PRECIO</p>
+            <h3 class="h2 text-[1.375rem] mt-3">Cuánto ofrecer,<br>en soles.</h3>
+          </div>
+          <div class="mt-5 text-[.8125rem] space-y-1.5">
+            <div class="flex justify-between text-[--ink-2]"><span>Piden</span><span class="tabular-nums">S/ 32,000</span></div>
+            <div class="flex justify-between text-rose-600"><span>− papeletas</span><span class="tabular-nums">S/ 1,840</span></div>
+            <div class="flex justify-between text-rose-600"><span>− siniestros</span><span class="tabular-nums">S/ 2,560</span></div>
+            <div class="flex justify-between font-medium border-t border-[--line] pt-1.5 mt-1.5"><span>Justo</span><span class="tabular-nums text-[--em]">S/ 27,600</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section id="demo" class="scroll-mt-20 max-w-[76rem] mx-auto px-6 py-28">
+    <div class="rv max-w-[38rem] mb-12">
+      <div class="kicker">
+          <span class="kicker-num">03</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Cómo se usa</span>
+        </div>
+      <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Escribes como hablas.</h2>
+      <p class="lede text-[1.0625rem] text-[--ink-2] mt-4">Sin formularios. Sin captchas. Un mensaje.</p>
+    </div>
+
+    <div class="rv bento overflow-hidden" data-d="1">
+      <div class="border-b border-[--line] px-6 py-3.5 bg-[--paper] flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e5e8ec]"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e5e8ec]"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e5e8ec]"></span>
+        <span class="ml-3 mono text-[.75rem] text-[--ink-2]">@autodata_peru_bot</span>
+      </div>
+
+      <div class="p-6 md:p-10 space-y-3">
+        <div class="flex justify-end">
+          <p class="bg-[--navy] text-white px-4 py-2.5 rounded-2xl rounded-br-md text-[.9375rem] max-w-md">
+            ABC-123 me lo dan a 32 mil
+          </p>
+        </div>
+
+        <div class="space-y-1.5 max-w-lg">
+          <p class="bg-[--paper] border border-[--line] px-4 py-2.5 rounded-2xl rounded-bl-md text-[.9375rem]">
+            ✅ SOAT vigente — Mapfre, vence 10/2026 <span class="text-[#a9b2bf]">(APESEG)</span>
+          </p>
+          <p class="bg-[--paper] border border-[--line] px-4 py-2.5 rounded-2xl text-[.9375rem]">
+            ⚠️ 2 choques reportados en 5 años <span class="text-[#a9b2bf]">(SBS)</span>
+          </p>
+          <p class="bg-[--paper] border border-[--line] px-4 py-2.5 rounded-2xl text-[.9375rem]">
+            ⚠️ S/ 1,840 en papeletas <span class="text-[#a9b2bf]">(SUTRAN)</span>
+          </p>
+          <p class="bg-rose-50 border border-rose-200 px-4 py-2.5 rounded-2xl rounded-bl-md text-[.9375rem] font-medium text-rose-700">
+            🛑 Orden de captura vigente <span class="font-normal text-rose-400">(SAT Lima)</span>
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-[--navy] p-6 flex items-start gap-4 mt-4">
+          <span class="ring w-3 h-3 rounded-full bg-rose-500 mt-2 shrink-0"></span>
+          <div>
+            <p class="h2 text-[1.375rem] text-white">NO COMPRES</p>
+            <p class="text-[.9375rem] text-white/55 mt-1.5">Este auto puede ser internado en cualquier momento.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Límites y roadmap -->
+  <section id="limites" class="border-t border-[--line] py-28 scroll-mt-20">
+    <div class="max-w-[76rem] mx-auto px-6">
+      <div class="rv max-w-[38rem] mb-14">
+        <div class="kicker">
+          <span class="kicker-num">04</span>
+          <span class="kicker-rule"></span>
+          <span class="kicker-label">Límites y roadmap</span>
+        </div>
+        <h2 class="h2 text-[clamp(2rem,4vw,3rem)]">Lo que <span class="text-rose-500">no</span> hacemos — y qué sigue.</h2>
+        <p class="lede text-[1.0625rem] text-[--ink-2] mt-5">
+          Preferimos un producto honesto a uno que promete de más. Todo esto se lo decimos
+          al usuario dentro del bot, no en letra chica.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-14">
+        <div class="rv">
+          <p class="mono text-[.6875rem] tracking-[.14em] text-rose-500 mb-5">LÍMITES CONOCIDOS</p>
+          <ul class="divide-y divide-[--line] border-y border-[--line]">
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin SUNARP.</span> No damos cadena de propietarios, gravámenes ni reportes de robo. Croma no lo expone y SUNARP tiene captcha.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sin MTC.</span> No tenemos revisión técnica vigente.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No reemplaza al mecánico.</span> Verificamos papeles y señales de riesgo, no el estado físico.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-no" aria-hidden="true">✕</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">No damos asesoría legal.</span> Mostramos datos oficiales; la decisión es tuya.</p></li>
+          </ul>
+        </div>
+
+        <div class="rv" data-d="1">
+          <p class="mono text-[.6875rem] tracking-[.14em] text-[--em] mb-5">ROADMAP</p>
+          <ol class="divide-y divide-[--line] border-y border-[--line]">
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">SUNARP y MTC</span> en cuanto Croma los exponga. La arquitectura de adapters ya está lista: es agregar una fuente, no rehacer el producto.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">Sello verificado con QR</span> para avisos de Marketplace. Cada aviso con el sello es distribución gratuita.</p></li>
+            <li class="py-5 flex gap-5"><span class="mark mark-go" aria-hidden="true">→</span><p class="text-[1.0625rem] text-[--ink-2]"><span class="text-[--ink] font-medium">API para concesionarias.</span> Ellas pagan, el comprador ve el reporte gratis. Quien compra un auto cada cinco años no debería ser el que paga.</p></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="relative overflow-hidden bg-[--navy] grain">
+    <div class="relative max-w-[46rem] mx-auto px-6 py-28 text-center">
+      <h2 class="rv display text-[clamp(2.25rem,5.5vw,3.75rem)] text-white">¿Vas a comprar<br>un auto usado?</h2>
+      <p class="rv lede text-[1.125rem] text-white/55 mt-6" data-d="1">Revísalo antes. Toma un minuto y es gratis.</p>
+      <a href="https://t.me/autodata_peru_bot" target="_blank" rel="noopener"
+         class="rv link-arrow inline-flex items-center gap-2 mt-10 bg-white text-[--navy] font-medium tracking-[-.01em] px-7 py-4 rounded-full text-[1.0625rem] hover:bg-white/90 transition-colors" data-d="2">
+        Abrir en Telegram <span aria-hidden="true">→</span>
       </a>
     </div>
   </section>
 
-  <!-- Problema -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-4">El problema</h2>
-    <p class="text-gray-400 text-lg leading-relaxed">
-      Comprar un auto usado en Perú obliga a revisar <strong class="text-gray-200">más de 20 portales del Estado</strong>,
-      cada uno con su propio captcha y su propia jerga. El resultado: el comprador promedio
-      <strong class="text-gray-200">no hace la verificación</strong> — o paga para que otro la haga.
-    </p>
-    <p class="text-gray-500 mt-4 text-sm">
-      La "consulta vehicular gratuita" más buscada del país es un directorio de 35 enlaces.
-      No consulta nada: el usuario hace los clics. Nadie paga por datos — pagan por no tener que usar una interfaz.
-    </p>
-  </section>
+  </main>
 
-  <!-- Qué hace -->
-  <section class="bg-gray-900/50 py-16">
-    <div class="max-w-4xl mx-auto px-6">
-      <h2 class="text-3xl font-bold mb-10 text-center">Qué hace AutoData</h2>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">🔍</div>
-          <h3 class="font-bold text-lg mb-2">Veredicto claro</h3>
-          <p class="text-gray-400 text-sm">
-            <span class="text-emerald-400 font-bold">COMPRA</span>,
-            <span class="text-yellow-400 font-bold">OJO</span> o
-            <span class="text-red-400 font-bold">NO COMPRES</span>.
-            No una tabla de datos — una decisión.
-          </p>
-        </div>
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">👤</div>
-          <h3 class="font-bold text-lg mb-2">Verifica al vendedor</h3>
-          <p class="text-gray-400 text-sm">
-            Detecta si quien dice ser "particular" en realidad tiene RUC de venta de vehículos.
-            <strong class="text-gray-300">Nadie más en Perú hace esto.</strong>
-          </p>
-        </div>
-        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-          <div class="text-3xl mb-3">💰</div>
-          <h3 class="font-bold text-lg mb-2">Precio justo en soles</h3>
-          <p class="text-gray-400 text-sm">
-            Convierte papeletas, deudas y siniestros a soles de descuento.
-            Te dice cuánto ofrecer y te da el mensaje para el vendedor.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Fuentes -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-8 text-center">Fuentes oficiales consultadas</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-      {% for src in sources %}
-      <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-800">
-        <p class="font-mono text-emerald-400 text-sm">{{ src.name }}</p>
-        <p class="text-gray-500 text-xs mt-1">{{ src.desc }}</p>
-      </div>
-      {% endfor %}
-    </div>
-    <p class="text-center text-gray-600 text-sm mt-6">
-      Todas las consultas vía <strong class="text-gray-400">Croma API</strong> — la plataforma de datos de gobierno.
-    </p>
-  </section>
-
-  <!-- Cómo funciona -->
-  <section class="bg-gray-900/50 py-16">
-    <div class="max-w-2xl mx-auto px-6">
-      <h2 class="text-3xl font-bold mb-10 text-center">Así de simple</h2>
-      <div class="bg-gray-800 rounded-2xl p-6 font-mono text-sm border border-gray-700 space-y-4">
-        <div class="flex items-start gap-3">
-          <span class="text-blue-400 shrink-0">Tú:</span>
-          <span class="text-gray-300">ABC-123 me lo dan a 32 mil</span>
-        </div>
-        <div class="space-y-2">
-          <div class="flex items-start gap-3">
-            <span class="text-emerald-400 shrink-0">Bot:</span>
-            <span class="text-gray-400">✅ SOAT vigente — Mapfre, vence 10/2026 <span class="text-gray-600">(APESEG)</span></span>
-          </div>
-          <div class="pl-12 text-gray-400">⚠️ 2 choques reportados en 5 años <span class="text-gray-600">(SBS)</span></div>
-          <div class="pl-12 text-gray-400">⚠️ S/ 1,840 en papeletas <span class="text-gray-600">(SUTRAN)</span></div>
-          <div class="pl-12 text-red-400 font-bold">🛑 Orden de captura vigente <span class="text-gray-600 font-normal">(SAT Lima)</span></div>
-        </div>
-        <div class="border-t border-gray-700 pt-3">
-          <p class="text-red-400 font-bold">VEREDICTO: NO COMPRES</p>
-          <p class="text-gray-500 text-xs mt-1">Este auto puede ser internado en cualquier momento.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Honestidad -->
-  <section class="max-w-4xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-bold mb-4">Lo que NO hacemos</h2>
-    <p class="text-gray-400 mb-6">Preferimos un producto honesto a uno que promete de más.</p>
-    <ul class="space-y-2 text-gray-500">
-      <li>❌ No consultamos <strong class="text-gray-400">SUNARP</strong> — no tenemos cadena de propietarios ni reportes de robo.</li>
-      <li>❌ No consultamos <strong class="text-gray-400">MTC</strong> — no tenemos revisión técnica.</li>
-      <li>❌ No reemplazamos una inspección mecánica presencial.</li>
-      <li>❌ No damos asesoría legal.</li>
-    </ul>
-  </section>
-
-  <!-- Footer -->
-  <footer class="border-t border-gray-800 py-8">
-    <div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 text-sm">
+  <footer class="py-9 border-t border-[--line]">
+    <div class="max-w-[76rem] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-[.875rem] text-[--ink-2]">
       <p>AutoData · Hackathon GOV-TECH Croma 2026</p>
-      <p>Hecho con <a href="https://usecroma.com" class="text-emerald-500 hover:underline" target="_blank">Croma API</a></p>
+      <p>Hecho con <a href="https://usecroma.com" target="_blank" rel="noopener" class="text-[--em] font-medium hover:underline">Croma API</a></p>
     </div>
   </footer>
+
+  <script>
+    // ── Navbar ──────────────────────────────────────────────────────────
+    const nav = document.getElementById('nav');
+    const burger = document.getElementById('burger');
+    const panel = document.getElementById('nav-panel');
+
+    // La sombra aparece sólo al desplazar: en el tope el nav se funde con el hero.
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const setMenu = (open) => {
+      burger.setAttribute('aria-expanded', String(open));
+      burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      panel.classList.toggle('open', open);
+      // Con el menú abierto el fondo no debe desplazarse detrás del panel.
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (!open) burger.focus({ preventScroll: true });
+    };
+
+    // Scrollspy: el usuario debe saber en qué sección está sin tener que adivinar.
+    // Un punto discreto bajo el enlace activo — no un subrayado que compita con el CTA.
+    //
+    // Se calcula por posición en cada scroll en vez de con IntersectionObserver:
+    // el observer mantiene un Set de secciones visibles que queda desincronizado
+    // cuando el usuario salta de golpe (click en un ancla, Fin, restaurar scroll).
+    // Medir contra una línea de referencia es determinista.
+    const spyLinks = [...document.querySelectorAll('[data-spy]')];
+    const sections = [...new Set(spyLinks.map((a) => a.dataset.spy))]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    let spyTick = false;
+    function updateSpy() {
+      spyTick = false;
+      const linea = window.innerHeight * 0.35;   // 35% de la altura del viewport
+      let activa = null;
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        if (r.top <= linea && r.bottom > linea) { activa = s.id; break; }
+      }
+      // Al final de la página gana la última sección, aunque no cruce la línea.
+      if (!activa && window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
+        activa = sections[sections.length - 1]?.id ?? null;
+      }
+      spyLinks.forEach((a) => {
+        if (activa && a.dataset.spy === activa) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+    }
+    if (sections.length) {
+      const onSpy = () => { if (!spyTick) { spyTick = true; requestAnimationFrame(updateSpy); } };
+      window.addEventListener('scroll', onSpy, { passive: true });
+      window.addEventListener('resize', onSpy, { passive: true });
+      updateSpy();
+    }
+
+    burger.addEventListener('click', () => {
+      setMenu(burger.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Al tocar un enlace el menú se cierra solo (si no, tapa el destino).
+    panel.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+
+    // Si se agranda a desktop con el menú abierto, se resetea.
+    window.addEventListener('resize', () => { if (window.innerWidth >= 768) setMenu(false); });
+
+    // Revelado. Failsafe a 2 s: una landing que se proyecta en la demo
+    // nunca puede quedarse en blanco si el observer no dispara.
+    const revealAll = () => document.querySelectorAll('.rv').forEach((el) => el.classList.add('in'));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: .12 });
+      document.querySelectorAll('.rv').forEach((el) => io.observe(el));
+      setTimeout(revealAll, 2000);
+    } else { revealAll(); }
+
+    // Contadores.
+    function runCounter(el) {
+      if (el.dataset.done) return;
+      el.dataset.done = '1';
+      const target = +el.dataset.count;
+      let n = 0; const step = Math.max(1, Math.round(target / 30));
+      const t = setInterval(() => { n += step; if (n >= target) { n = target; clearInterval(t); } el.textContent = n; }, 26);
+    }
+    if ('IntersectionObserver' in window) {
+      const co = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { runCounter(e.target); co.unobserve(e.target); } });
+      }, { threshold: .6 });
+      document.querySelectorAll('[data-count]').forEach((el) => co.observe(el));
+    }
+    setTimeout(() => document.querySelectorAll('[data-count]').forEach(runCounter), 2000);
+
+    // Conversación animada.
+    const chat = document.getElementById('chat');
+    const script = [
+      { me: 1, html: 'ABC-123 me lo dan a 32 mil' },
+      { html: 'Revisando 6 fuentes oficiales…', typing: 1 },
+      { html: '✅ SOAT vigente <span class="text-[#a9b2bf]">(APESEG)</span>' },
+      { html: '⚠️ 2 choques en 5 años <span class="text-[#a9b2bf]">(SBS)</span>' },
+      { html: '⚠️ S/ 1,840 en papeletas <span class="text-[#a9b2bf]">(SUTRAN)</span>' },
+      { html: '🛑 <b>Orden de captura vigente</b>', danger: 1 },
+      { html: '<b>NO COMPRES</b><br><span class="text-white/60 text-[.75rem]">Puede ser internado en cualquier momento.</span>', verdict: 1 },
+    ];
+
+    function bubble(i) {
+      const w = document.createElement('div');
+      w.className = 'bub flex ' + (i.me ? 'justify-end' : 'justify-start');
+      const b = document.createElement('div');
+      b.className = i.me      ? 'bg-[--navy] text-white px-3.5 py-2 rounded-2xl rounded-br-md max-w-[85%]'
+                  : i.verdict ? 'bg-[--navy] text-white px-3.5 py-2.5 rounded-2xl rounded-bl-md max-w-[88%]'
+                  : i.danger  ? 'bg-rose-50 border border-rose-200 text-rose-700 px-3.5 py-2 rounded-2xl max-w-[90%]'
+                              : 'bg-white border border-[--line] px-3.5 py-2 rounded-2xl rounded-bl-md max-w-[90%]';
+      b.innerHTML = i.typing ? '<span class="dots"><i></i><i></i><i></i></span> ' + i.html : i.html;
+      w.appendChild(b);
+      return w;
+    }
+
+    async function play() {
+      while (true) {
+        chat.innerHTML = '';
+        for (const i of script) {
+          const el = bubble(i);
+          chat.appendChild(el);
+          requestAnimationFrame(() => el.classList.add('show'));
+          chat.scrollTop = chat.scrollHeight;
+          await new Promise((r) => setTimeout(r, i.me ? 950 : 1050));
+        }
+        await new Promise((r) => setTimeout(r, 4200));
+      }
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      script.forEach((i) => { const el = bubble(i); el.classList.add('show'); chat.appendChild(el); });
+    } else { play(); }
+  </script>
 
 </body>
 </html>
