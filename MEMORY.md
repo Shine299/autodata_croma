@@ -5,9 +5,9 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `sprint1-arroz`
-**Sprint actual:** Sprint 1 — "Los datos entran"
-**Última actualización:** 2026-08-14 (P2 cerró C-04, C-05, C-06)
+**Rama activa:** `jose-p3-sprint2`
+**Sprint actual:** Sprint 2 — "El producto decide" (bloque de P3 cerrado; falta la Puerta 2) → prep Sprint 3
+**Última actualización:** 2026-08-14 (P3 cerró D-02/D-04/D-05/D-06/D-07 + fix de integración; suite 147/147)
 
 ---
 
@@ -47,6 +47,31 @@
 
 ---
 
+## Sprint 2 — Estado de tareas
+
+### Completado por P3 (rama `jose-p3-sprint2`, commit `9e7eae9` — pendiente push + merge a `testing`)
+
+| ID | Tarea | Archivos |
+|----|-------|----------|
+| D-02 | Máquina de estados persistida en `conversations` (sobrevive a reinicio) | `app/bot/states.py`, `app/repositories/conversation_repo.py`, `app/bot/handlers.py` |
+| D-04 | Bot llama a `POST /verifications` por HTTP; 502/timeout → mensaje amable, no crash | `app/bot/api_client.py`, `app/bot/handlers.py`, `app/config.py` (nuevo `api_base_url`) |
+| D-05 | Mensajes progresivos por fuente (polling de `/jobs/{id}`), con fallback síncrono a D-04 | `app/bot/job_client.py`, `app/bot/handlers.py` |
+| D-06 | Veredicto formateado (semáforo, 1 columna) cableado al flujo real | `app/bot/formatters.py` |
+| D-07 | 4 botones inline bajo el veredicto | `app/bot/keyboards.py`, `on_callback` en `handlers.py` |
+| C-09 (enqueue) | Modo async en `POST /verifications` (`Prefer: respond-async` → 202 + jobId + pollUrl) que alimenta el `job_store` fuente por fuente | `app/api/verifications.py`, `app/services/verification_runner.py` |
+
+Tests nuevos: `tests/test_bot_verification_flow.py`, `tests/test_bot_progress.py`, `tests/test_verification_async.py`. **Suite completa: 147/147 verde.**
+
+### Fix de integración del Sprint 2 (coordinado — tocó carpetas de P1/P2/P4)
+
+Un merge había regresado `app/main.py` (solo 4 routers, sin exception handlers) → **15 tests en rojo**. Reparado:
+- **C-10** — `app/main.py` reconstruido: registra los routers de **sellers** y **web** + 4 exception handlers con el envelope `{"error":{...}}` (`03-API-DESIGN.md §L16`). El handler desenvuelve detalles dict, así `sellers.py` NO se tocó.
+- **C-08** — nueva ruta `GET /verifications/{id}` en `app/api/verifications.py`.
+- Asserts alineados al envelope: `tests/test_sellers_api.py` (×2), `tests/test_verification_persistence.py` (×1).
+- **P1/P2/P4: revisen estos cambios en sus carpetas al mergear** — fueron necesarios para cerrar la integración.
+
+---
+
 ## Avisos / handoffs entre roles
 
 **→ P2 (de P1):** B-14 orquestador concurrente **LISTO**.
@@ -76,19 +101,32 @@ ya no están pendientes — P4 los entregó completos. Ver tabla "Completado por
 - **Acción para P1:** Cuando tengas **C-01** listo, reemplaza el mock en `app/services/vehicles.py`.
 
 
+**→ Todos (de P3):** Bloque de P3 del Sprint 2 cerrado (commit `9e7eae9`; falta push + merge a `testing`).
+- **Supabase / DB (IMPORTANTE):** el `DATABASE_URL` con host directo `db.<ref>.supabase.co` **ya NO resuelve**
+  (Supabase lo deprecó). Usar el **session pooler**:
+  `postgresql://postgres.<ref>:<pass con @ como %40>@aws-0-sa-east-1.pooler.supabase.com:5432/postgres`
+  (región del proyecto = **sa-east-1**; el usuario debe llevar el ref; las 5 tablas ya existen). El proyecto está ACTIVO.
+- **Red:** Telegram queda **bloqueado en la red de la universidad** (DNS ok, TCP a api.telegram.org cae); correr el
+  bot con internet propio / hotspot.
+- **Antes del Sprint 3:** falta pasar la **Puerta 2** (testing end-to-end, `06-PLAN-ACCION.md` §Puerta 2).
+
 **Bot vivo:** `@autodata_peru_bot`. Levantar con polling (ver "Cómo correr el bot" abajo).
 
 ---
 
 ## Cómo correr el bot (P3)
 
-Desde la raíz del repo, en PowerShell:
+Desde la raíz del repo, en PowerShell, en **dos ventanas** (el bot le pide el veredicto a la API):
 
 ```powershell
+# Ventana 1 — API
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
+# Ventana 2 — bot
 .\.venv\Scripts\python.exe -m app.bot.main
 ```
 
-Requiere `TELEGRAM_BOT_TOKEN` en `.env` (A-04). Corre en modo polling; se detiene con `Ctrl+C`.
+Requiere `TELEGRAM_BOT_TOKEN` y el `DATABASE_URL` del **pooler** en `.env` (ver handoff de P3 arriba).
+Corre en modo polling; se detiene con `Ctrl+C`. En modo mock una placa escribible siempre da 🟢 GO.
 
 ---
 
