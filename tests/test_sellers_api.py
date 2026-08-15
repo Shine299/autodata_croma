@@ -47,8 +47,8 @@ async def test_seller_screening_consent_required():
 
     assert response.status_code == 400
     body = response.json()
-    assert "detail" in body
-    error = body["detail"]["error"]
+    assert "error" in body
+    error = body["error"]
     assert error["code"] == "consent_required"
 
 
@@ -68,7 +68,7 @@ async def test_seller_screening_invalid_dni_format():
 
     assert response.status_code == 400
     body = response.json()
-    assert body["detail"]["error"]["code"] == "invalid_document"
+    assert body["error"]["code"] == "invalid_document"
 
 
 @pytest.mark.asyncio

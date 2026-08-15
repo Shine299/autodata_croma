@@ -11,6 +11,8 @@
 | `_ASK_PLATE` | El usuario no mandó una placa válida | "Mándame la placa del auto (ej. `ABC-123`) y lo reviso. 🚗" |
 | `_ASK_PRICE` | Ya tengo la placa, pido el precio | "Anotada la placa *{plate}*. ¿A cuánto te lo ofrecen? (ej. `32 mil`)" |
 | `_DONE` | Tengo placa + precio | "Listo: placa *{plate}* a *S/ {price:,.0f}*. …" |
+| `_API_ERROR` | La API no respondió (502/timeout) al verificar (D-04) | "😕 No pude terminar la verificación ahora mismo…" |
+| `_PROGRESS` | Cada fuente que va llegando en el modo progresivo (D-05) | "🔎 Consultando *{source}*…" |
 | `_CB_REPLIES[detail]` | Botón "Ver detalle" | "Abre el detalle completo aquí: {vid}" |
 | `_CB_REPLIES[appraise]` | Botón "Calcular precio" | "Dale, ¿a cuánto te lo ofrecen? Escríbeme el precio…" |
 | `_CB_REPLIES[seller]` | Botón "Verificar vendedor" | "Para revisar al vendedor necesito tu *sí* explícito…" |
