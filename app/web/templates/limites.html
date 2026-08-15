@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoData — Límites conocidos y roadmap</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Proporción 16:9 para proyectar. En pantallas chicas se deja fluir. */
+    @media (min-width: 1024px) {
+      .slide { aspect-ratio: 16 / 9; }
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="slide w-full max-w-6xl bg-gray-950 flex flex-col justify-center px-8 py-10 md:px-16">
+
+    <!-- Encabezado -->
+    <p class="text-emerald-400 font-mono text-xs md:text-sm tracking-widest mb-2">AUTODATA · HONESTIDAD DE PRODUCTO</p>
+    <h1 class="text-3xl md:text-5xl font-bold mb-8">
+      Lo que <span class="text-red-400">no</span> hacemos — y qué sigue
+    </h1>
+
+    <div class="grid md:grid-cols-2 gap-8 md:gap-12">
+
+      <!-- Columna 1: Límites -->
+      <div>
+        <h2 class="text-lg md:text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+          <span>🛑</span> Límites conocidos
+        </h2>
+        <ul class="space-y-3 text-sm md:text-base">
+          <li class="border-l-2 border-red-500/40 pl-3">
+            <strong class="text-gray-100">Sin SUNARP.</strong>
+            <span class="text-gray-400">No damos cadena de propietarios, gravámenes ni reporte de robo.
+            Croma no lo expone y SUNARP tiene captcha: no era confiable en 36 h.</span>
+          </li>
+          <li class="border-l-2 border-red-500/40 pl-3">
+            <strong class="text-gray-100">Sin MTC.</strong>
+            <span class="text-gray-400">No tenemos revisión técnica vigente.</span>
+          </li>
+          <li class="border-l-2 border-red-500/40 pl-3">
+            <strong class="text-gray-100">No reemplaza al mecánico.</strong>
+            <span class="text-gray-400">Verificamos papeles y señales de riesgo, no el estado físico del vehículo.</span>
+          </li>
+          <li class="border-l-2 border-red-500/40 pl-3">
+            <strong class="text-gray-100">No damos asesoría legal.</strong>
+            <span class="text-gray-400">Mostramos datos oficiales; la decisión es del comprador.</span>
+          </li>
+        </ul>
+        <p class="text-gray-500 text-xs md:text-sm mt-5 italic">
+          Todo esto se lo decimos al usuario dentro del bot, no en letra chica.
+        </p>
+      </div>
+
+      <!-- Columna 2: Roadmap -->
+      <div>
+        <h2 class="text-lg md:text-xl font-bold text-emerald-400 mb-4 flex items-center gap-2">
+          <span>🛣️</span> Roadmap
+        </h2>
+        <ol class="space-y-3 text-sm md:text-base">
+          <li class="border-l-2 border-emerald-500/40 pl-3">
+            <strong class="text-gray-100">1 · SUNARP y MTC</strong>
+            <span class="text-gray-400">en cuanto Croma los exponga. La arquitectura de adapters ya está lista:
+            es agregar una fuente, no rehacer el producto.</span>
+          </li>
+          <li class="border-l-2 border-emerald-500/40 pl-3">
+            <strong class="text-gray-100">2 · Sello verificado con QR</strong>
+            <span class="text-gray-400">para avisos de Marketplace. Cada aviso con el sello es distribución gratuita.</span>
+          </li>
+          <li class="border-l-2 border-emerald-500/40 pl-3">
+            <strong class="text-gray-100">3 · API para concesionarias</strong>
+            <span class="text-gray-400">Ellas pagan, el comprador ve el reporte gratis.
+            El que compra un auto cada 5 años no debería ser el que paga.</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Cierre -->
+    <div class="mt-8 md:mt-10 border-t border-gray-800 pt-5">
+      <p class="text-base md:text-xl text-gray-200 font-medium">
+        Preferimos un producto <span class="text-emerald-400">honesto</span>
+        a uno que promete de más.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
