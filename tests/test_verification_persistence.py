@@ -113,7 +113,7 @@ async def test_verifications_api_endpoints(memory_db_session):
             fake_id = str(uuid.uuid4())
             resp = await ac.get(f"/api/v1/verifications/{fake_id}")
             assert resp.status_code == 404
-            assert resp.json()["detail"]["error"]["code"] == "verification_not_found"
+            assert resp.json()["error"]["code"] == "verification_not_found"
 
             # 2. Existing ID -> 200
             repo = VerificationRepository(memory_db_session)

@@ -10,7 +10,16 @@ Claves y {placeholders} sin cambios respecto al placeholder original de P3.
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from app.bot.keyboards import CB_APPRAISE, CB_DETAIL, CB_NEW, CB_SELLER
+from app.bot.api_client import VerificationApiError, create_verification
+from app.bot.formatters import format_verdict
+from app.bot.job_client import poll_job, start_async_verification
+from app.bot.keyboards import (
+    CB_APPRAISE,
+    CB_DETAIL,
+    CB_NEW,
+    CB_SELLER,
+    verdict_keyboard,
+)
 from app.bot.parsers import parse_free_text
 from app.bot.states import State
 from app.core.database import async_session_maker
@@ -51,6 +60,13 @@ _DONE = (
     "Listo: placa *{plate}* a *S/ {price:,.0f}*.\n"
     "_Dame un momento, estoy revisando las fuentes oficiales para darte el veredicto._"
 )
+# copy cerrado (P5 — Sprint 2). Mensaje amable cuando la API no responde (DoD D-04).
+_API_ERROR = (
+    "😕 No pude terminar la verificación ahora mismo (una fuente oficial no respondió).\n"
+    "Inténtalo de nuevo en un momento, por favor."
+)
+# copy cerrado (P5 — Sprint 2). Un mensaje por fuente que va llegando (D-05).
+_PROGRESS = "🔎 Consultando *{source}*…"
 
 
 def next_state(current: State, extracted, context: dict) -> tuple[State, dict, str]:
@@ -77,6 +93,64 @@ def next_state(current: State, extracted, context: dict) -> tuple[State, dict, s
     return current, context, _ASK_PLATE
 
 
+async def _deliver_verdict(message, ctx: dict) -> None:
+    """D-04: llama a POST /verifications y entrega el veredicto formateado.
+
+    Un fallo de la API (502, timeout, red caída) se traduce en `_API_ERROR`, nunca en
+    un crash del handler (DoD D-04). El render usa `format_verdict` (D-06) y cuelga los
+    4 botones con `verdict_keyboard` (D-07).
+    """
+    try:
+        data = await create_verification(
+            plate=ctx.get("plate"),
+            asking_price=ctx.get("asking_price"),
+        )
+    except VerificationApiError:
+        await message.reply_text(_API_ERROR, parse_mode="Markdown")
+        return
+
+    await _send_verdict(message, data)
+
+
+async def _send_verdict(message, data: dict) -> None:
+    """Render final compartido: veredicto formateado (D-06) + 4 botones (D-07)."""
+    vid = data.get("verificationId", "")
+    await message.reply_text(
+        format_verdict(data),
+        parse_mode="Markdown",
+        reply_markup=verdict_keyboard(vid),
+    )
+
+
+async def _deliver_verdict_progressive(message, ctx: dict) -> None:
+    """D-05: modo asíncrono con mensajes progresivos por fuente.
+
+    Arranca el job (`Prefer: respond-async`) y pollea; por cada fuente que se completa
+    manda un mensaje corto, y al final entrega el veredicto. Si el modo async no está
+    disponible, cae al veredicto síncrono de D-04 (misma UI, mismo `_API_ERROR`).
+    """
+    plate = ctx.get("plate")
+    price = ctx.get("asking_price")
+
+    try:
+        job_id = await start_async_verification(plate, asking_price=price)
+    except VerificationApiError:
+        # El endpoint async no respondió → fallback al camino síncrono (D-04).
+        await _deliver_verdict(message, ctx)
+        return
+
+    async def _on_source(source: str) -> None:
+        await message.reply_text(_PROGRESS.format(source=source), parse_mode="Markdown")
+
+    try:
+        data = await poll_job(job_id, _on_source)
+    except VerificationApiError:
+        await message.reply_text(_API_ERROR, parse_mode="Markdown")
+        return
+
+    await _send_verdict(message, data)
+
+
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Recibe texto libre, avanza la máquina de estados y persiste el resultado."""
     chat_id = str(update.effective_chat.id)
@@ -90,6 +164,11 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await repo.set(chat_id, new_state, new_ctx)
 
     await update.message.reply_text(reply, parse_mode="Markdown")
+
+    # D-05: si ya tenemos placa + precio, verificamos en modo progresivo
+    # (con fallback síncrono D-04 si el modo async no está disponible).
+    if new_state is State.DONE:
+        await _deliver_verdict_progressive(update.message, new_ctx)
 
 
 # --- D-07: botones inline -------------------------------------------------

@@ -1,13 +1,21 @@
-import uuid
-from datetime import datetime, timezone
-from fastapi import APIRouter
+import asyncio
 
-from app.schemas.verification import VerificationRequest, VerificationResponse, Confidence
+from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.core.jobs import job_store
+from app.repositories.verification_repo import VerificationRepository
+from app.schemas.verification import VerificationRequest
 from app.schemas.appraisal import AppraisalRequest, AppraisalResponse
 from app.services.vehicles import get_vehicle_inspection
-from app.services.sellers import get_seller_screening
-from app.services.scoring import calculate_score
 from app.services.appraisal import calculate_appraisal
+from app.services.verification_runner import (
+    SOURCE_DISPLAYS,
+    build_verification,
+    run_verification_job,
+)
 
 router = APIRouter(tags=["Verifications"])
 
@@ -26,46 +34,45 @@ async def create_appraisal(verification_id: str, req: AppraisalRequest):
     return {"data": appraisal.model_dump(by_alias=True)}
 
 @router.post("/verifications", response_model=dict)
-async def create_verification(req: VerificationRequest):
-    vehicle = await get_vehicle_inspection(req.plate)
-    seller = None
-    if req.seller:
-        seller = await get_seller_screening(req.seller.document_number)
-    
-    score = calculate_score(
-        vehicle=vehicle,
-        seller=seller,
-        claimed_role=req.seller.claimed_role if req.seller else None
-    )
-    
-    verified_sources = sum(1 for s in vehicle.sources_summary if s.status != "error")
-    total_sources = len(vehicle.sources_summary)
-    
-    if seller:
-        verified_sources += sum(1 for s in seller.sources_summary if s.status != "error")
-        total_sources += len(seller.sources_summary)
-        
-    verification_id = str(uuid.uuid4())
-    
-    resp = VerificationResponse(
-        verification_id=verification_id,
-        created_at=datetime.now(timezone.utc).isoformat(),
-        plate=req.plate,
-        verdict=score.verdict,
-        risk_score=score.risk_score,
-        headline=score.headline,
-        summary=score.summary,
-        flags=score.flags,
-        vehicle=vehicle.model_dump(by_alias=True),
-        seller=seller.model_dump(by_alias=True) if seller else None,
-        appraisal=None,
-        confidence=Confidence(
-            verified_sources=verified_sources,
-            total_sources=total_sources,
-            capped=score.verdict == "CAUTION" and sum(1 for f in score.flags if f.code == "SOURCES_UNAVAILABLE") > 0
-        ),
-        report_url=f"https://autodata.pe/r/{verification_id}",
-        disclaimer="Reporte generado con fines referenciales."
-    )
-    
+async def create_verification(
+    req: VerificationRequest,
+    prefer: str | None = Header(default=None),
+):
+    """Crea una verificación.
+
+    Modo síncrono (por defecto): devuelve el veredicto completo (200).
+    Modo asíncrono (`Prefer: respond-async`, C-09): encola un job, devuelve 202 con
+    `jobId` + `pollUrl` y corre la verificación en background alimentando el `job_store`.
+    """
+    if prefer and "respond-async" in prefer.lower():
+        job = job_store.create(SOURCE_DISPLAYS)
+        # Fire-and-forget: la verificación sigue en background; el cliente pollea el job.
+        asyncio.create_task(run_verification_job(job.job_id, req))
+        return JSONResponse(
+            status_code=202,
+            content={
+                "data": {
+                    "jobId": job.job_id,
+                    "status": "pending",
+                    "pollUrl": f"/api/v1/jobs/{job.job_id}",
+                }
+            },
+        )
+
+    resp = await build_verification(req)
     return {"data": resp.model_dump(by_alias=True)}
+
+
+@router.get("/verifications/{verification_id}", response_model=dict)
+async def get_verification(
+    verification_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """C-08 — Recupera una verificación guardada por su id.
+
+    404 → el handler global lo convierte en el envelope `{"error": {...}}`.
+    """
+    payload = await VerificationRepository(db).get_by_id(verification_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="verification_not_found")
+    return {"data": payload}
