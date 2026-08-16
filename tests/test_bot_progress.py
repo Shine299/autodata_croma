@@ -96,3 +96,22 @@ async def test_poll_failure_shows_friendly_message(monkeypatch):
 
     assert len(msg.calls) == 1
     assert msg.calls[0]["text"] == handlers._API_ERROR
+
+
+@pytest.mark.asyncio
+async def test_api_unreachable_shows_connection_message(monkeypatch):
+    # start_async y el fallback síncrono fallan por no poder contactar la API local.
+    async def _start_conn_err(*args, **kwargs):
+        raise VerificationApiError("no se pudo contactar", connection_error=True)
+
+    async def _sync_conn_err(*args, **kwargs):
+        raise VerificationApiError("no se pudo contactar", connection_error=True)
+
+    monkeypatch.setattr(handlers, "start_async_verification", _start_conn_err)
+    monkeypatch.setattr(handlers, "create_verification", _sync_conn_err)
+
+    msg = _FakeMessage()
+    await handlers._deliver_verdict_progressive(msg, {"plate": "ABC123", "asking_price": 32000})
+
+    assert len(msg.calls) == 1
+    assert msg.calls[0]["text"] == handlers._API_DOWN

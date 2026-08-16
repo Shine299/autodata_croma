@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from app.bot.formatters import format_verdict
+from app.bot.parsers import format_plate_display
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -35,7 +36,8 @@ def test_headline_and_plate_present():
     data = _load("verification_stop.json")
     text = format_verdict(data)
     assert data["headline"] in text
-    assert data["plate"] in text
+    # La placa se muestra con guion (COH099 → COH-099).
+    assert format_plate_display(data["plate"]) in text
 
 
 def test_all_flags_rendered():

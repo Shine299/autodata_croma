@@ -35,7 +35,9 @@ async def start_async_verification(
                 url, json=payload, headers={"Prefer": "respond-async"}
             )
     except httpx.RequestError as exc:
-        raise VerificationApiError(f"no se pudo contactar a la API: {exc}") from exc
+        raise VerificationApiError(
+            f"no se pudo contactar a la API: {exc}", connection_error=True
+        ) from exc
 
     if resp.status_code >= 400:
         raise VerificationApiError(
@@ -72,7 +74,9 @@ async def poll_job(
             try:
                 resp = await client.get(url)
             except httpx.RequestError as exc:
-                raise VerificationApiError(f"error al pollear el job: {exc}") from exc
+                raise VerificationApiError(
+                    f"error al pollear el job: {exc}", connection_error=True
+                ) from exc
 
             if resp.status_code >= 500:
                 raise VerificationApiError(

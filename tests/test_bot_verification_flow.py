@@ -63,9 +63,9 @@ async def test_happy_path_renders_verdict_with_keyboard(monkeypatch):
 
     assert len(msg.calls) == 1
     call = msg.calls[0]
-    # El veredicto formateado (D-06): semáforo verde + placa.
+    # El veredicto formateado (D-06): semáforo verde + placa (mostrada con guion).
     assert "🟢" in call["text"]
-    assert "ABC123" in call["text"]
+    assert "ABC-123" in call["text"]
     # Los 4 botones (D-07) cuelgan del mensaje con el verificationId correcto.
     assert isinstance(call["reply_markup"], InlineKeyboardMarkup)
     assert "ver_go_0001" in call["reply_markup"].inline_keyboard[0][0].callback_data

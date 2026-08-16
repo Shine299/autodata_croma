@@ -5,9 +5,92 @@
 
 **Proyecto:** AutoData — Verificación vehicular + vendedor para Perú via Croma
 **Hackathon:** GOV-TECH Croma · Entrega: **16 ago 2026, 6:30 p.m.**
-**Rama activa:** `joaquin-p1-sprint3`
+**Rama activa:** `testing`
 **Sprint actual:** Sprint 3 — "Listo para usarse"
-**Última actualización:** 2026-08-14 (P1 cerró E-03, E-07)
+**Última actualización:** 2026-08-15 (Croma **live** + IA de fraseo Gemini + `/ayuda` ampliado + fix seller/tasación)
+
+---
+
+## 🆕 Cambios 2026-08-15 — Croma en vivo + IA + /ayuda (rama `testing`)
+
+**Por qué:** la competencia exige consumir la herramienta **Croma real**, no el demo. Además
+se pidió lenguaje más natural (IA gratuita) y un `/ayuda` más completo.
+
+1. **El bot ahora consume Croma REAL.** `CROMA_MODE=live` en `.env` (los **tests siguen en
+   `mock`**: `tests/conftest.py` fuerza mock y apaga la IA, Art. III). Verificado en vivo:
+   SBS, SUTRAN, SAT Lima y el vendedor (SUNAT+SAT) responden con datos reales de
+   `https://api.croma.run`. Los endpoints reales están en `https://api.croma.run/catalog`.
+   - Todas las rutas usan sufijo `/v1`. Ojo con dos detalles que se corrigieron:
+     - **SAT Lima cuenta** (deuda por placa) NO recibe `{plate}`; recibe
+       `{"document_type":"placa","document_number":<placa>}` (ver `_source_body` en
+       `app/services/vehicles.py`).
+     - **Vendedor**: SUNAT por DNI = `POST /pe/sunat/document/v1` (`document_type`/`document_number`);
+       por RUC = `POST /pe/sunat/ruc/v1` (`{"ruc":...}`); deuda = `POST /pe/sat-lima/account-status/v1`.
+       Antes apuntaban a rutas inventadas (`/api/v1/croma/...`). Arreglado en `app/services/seller.py`.
+   - **Cuota real: 500 requests/24h POR endpoint** (no 100 totales). Igual hay caché en
+     `fixtures/demo/` para la demo rápida.
+   - ⚠️ **Latencia de Croma alta** (20–40s por fuente en pruebas); algunas dan timeout y el
+     veredicto queda tope `CAUTION`. Para el demo veloz usar las 4 placas sembradas
+     (`fixtures/demo/`, `CROMA_MODE=mock`) y **una sola** placa en vivo ante el jurado.
+   - Nota: el fan-out de 6 fuentes va con `CromaClient()` **sin sesión** (un `AsyncSession`
+     no es seguro en `asyncio.gather` → daba errores de caché). Por eso el path live no
+     escribe caché ni `quota_log`; se prioriza correctitud sobre la optimización.
+
+2. **D-08 arreglado (vendedor real).** Antes `create_verification` usaba un **mock duro**
+   (`app/services/sellers.py`, importaba de `tests/`) → nunca tocaba Croma. Ese archivo se
+   **eliminó**. Ahora el flujo completo usa `perform_seller_screening` (SUNAT + SAT reales).
+
+3. **D-09 arreglado (tasación real).** Antes la tasación estaba clavada a la placa demo
+   `D0H-741`. Se agregó `plate` a `AppraisalRequest`; el bot manda `ctx["plate"]` y el
+   endpoint tasa la placa real (o la recupera de la verificación guardada, C-08).
+
+4. **IA de fraseo (Gemini, gratis, bajo consumo) — solo naturaliza texto.** El veredicto y
+   el precio SIEMPRE se calculan con las reglas deterministas; la IA nunca los decide.
+   - Nuevo `app/integrations/llm/gemini.py` (httpx, modelo `gemini-flash-lite-latest`).
+     **Falla abierto**: sin key o ante cualquier error devuelve `None` y el bot usa su
+     texto de siempre. Verificado en vivo con la key del equipo ✅.
+   - ⚠️ **Modelo:** usar `gemini-flash-lite-latest` (lite = menor consumo y "latest" no se
+     deprecia). `gemini-2.0-flash` y `gemini-2.5-flash-lite` YA devuelven 404.
+   - Se usa en 3 puntos (handlers.py): resumen del veredicto, guion de negociación, y
+     respuesta amable cuando no se entiende el mensaje. Prompts en `app/core/prompts.py`.
+   - **Config nueva en `.env`:** `GEMINI_API_KEY=` (key gratuita de aistudio.google.com — ya
+     puesta), `GEMINI_MODEL=gemini-flash-lite-latest`, `LLM_ENABLED=true`.
+
+5. **`/ayuda` ampliado** (`_AYUDA_TEXT` en `handlers.py`): las 6 fuentes y qué detecta cada
+   una, ejemplos copiables, cómo leer el semáforo 🟢🟡🔴 + precio/guion, y límites honestos.
+
+6. **C-09 async restaurado.** El merge a `testing` había regresado `create_verification` a una
+   versión síncrona que rompía 2 tests async. Se restauró el modo `Prefer: respond-async`
+   (202 + job) delegando en `build_verification`. **Suite: 162 verde.**
+
+7. **Asistente de compra (UX honesta).** El chatbot ya no solo consulta; entrega un reporte
+   estructurado. Decisiones del usuario: (a) marca/modelo/año/km/precio de mercado se marcan
+   **NO_DISPONIBLE** (Croma Perú no los da; requieren SUNARP/MTC), nunca se inventan; (b) el
+   precio objetivo = **precio pedido − deducciones VERIFICADAS** (el cliente trae el precio);
+   (c) la IA **no** toca el veredicto (100% determinista).
+   - `app/bot/formatters.py` reescrito: secciones INFORMACIÓN VERIFICADA / PENDIENTE /
+     NO_DISPONIBLE / ANÁLISIS DEL PRECIO / RIESGOS / RECOMENDACIÓN / CONFIANZA. Recomendación:
+     🟢 COMPRAR · 🟡 NEGOCIAR · 🔴 NO COMPRAR · ⚪ INFORMACIÓN INSUFICIENTE (obligatoria si una
+     fuente crítica —orden de captura— no respondió). Confianza 🟢/🟡/🔴 según fuentes verificadas.
+     Nunca dice "verificado/limpio" si una fuente falló. `purchase_recommendation()` /
+     `confidence_level()` son deterministas (basadas en `verdict` + `confidence`).
+   - `app/bot/parsers.py`: acepta `COH 099` (espacio), `29k`, `S/29.000`; `format_plate_display`
+     muestra la placa con guion. Ya no re-pregunta una placa válida.
+   - La tasación se calcula dentro de `build_verification` cuando viene el precio (un solo paso).
+   - **Persistencia verificada:** el estado de conversación (placa, precio, contexto) se guarda en
+     la tabla `conversations` de **Supabase** y sobrevive a un reinicio del proceso (probado en vivo).
+   - **Botón "Ver detalle" (`CB_DETAIL`) implementado:** antes era un stub que devolvía el UUID.
+     Ahora `on_text` guarda la verificación en `ctx["last_verification"]` y el botón la renderiza
+     con `format_detail()` (papeletas ítem por ítem, póliza SOAT, deuda desglosada, estado de cada
+     fuente con latencia, id de consulta). Test: `test_format_detail_shows_items_and_sources`.
+   - **Bugfix (importante):** si el chat quedaba en estado `DONE` de una consulta previa, al saludar
+     ("Hola") el bot **re-disparaba la verificación en vano** (mostraba el error de fuente caída). El
+     fallback de `next_state` ahora nunca devuelve un estado terminal (vuelve a `IDLE`), y `on_text`
+     solo verifica si el contexto tiene placa. Test: `test_greeting_while_done_does_not_reverify`.
+
+**Pendiente menor (no bloqueante):** la respuesta "placa sin registros" ya no devuelve 404
+amable a nivel API (el bot igual valida la placa antes de llamar). Revisar D-10 caso 1 si se
+quiere el mensaje dedicado.
 
 ---
 
@@ -48,13 +131,40 @@
 
 | E-03 | Sembrar 5 placas en live y congelar fixtures | P1 | `fixtures/demo/` (24 archivos), `docs/quota-log.md`, `app/integrations/croma/client.py` |
 | E-07 | README publico del repo | P1 | `README.md` reescrito para terceros |
+| E-04 | Deploy + observabilidad (Docker, Railway/Render, telemetría) | P4 | `Dockerfile`, `docker-compose.yml`, `Procfile`, `railway.json`, `render.yaml`, `app/core/logging.py` |
+| E-08 | Slide "límites conocidos y roadmap" (SUNARP, MTC) | P5 | `app/web/templates/limites.html`, ruta `/limites` en `app/web/routes.py` |
 
 ### Pendiente
 
 | ID | Tarea | Dueño | Notas |
 |----|-------|-------|-------|
-| A-07 | Prompts base para agentes | P5 | `08-PROMPTS.md` existe en `files/` |
-| E-02 | Landing page (1 pantalla con pitch) | P5 | `app/web/templates/` vacío |
+| D-08 | Flujo de vendedor con confirmación explícita | P3 | — |
+| D-09 | Flujo de tasación con guion copiable | P3 | — |
+| D-10 | Mensajes de error para los 7 casos borde | P3 + P2 | — |
+| E-05 | Guion de demo cronometrado | P5 | Contenido listo en `files/09-DEMO-PITCH.md`. Falta el **ensayo ×2 con cronómetro** (no es trabajo de archivo) |
+| E-06 | Grabar video de respaldo | P5 + P3 | Depende de E-03 ✅ y D-09 |
+| E-09 | Enviar el formulario de entrega | P5 | Antes de las 6:00 p.m., no 6:29 |
+
+> **Nota:** A-07 (prompts base) y E-02 (landing) figuraban como pendientes de P5 en una versión
+> anterior de este archivo. Ambos están **completados y mergeados** desde Sprint 1 —
+> ver `app/core/prompts.py` y `app/web/templates/landing.html`. Igual E-01 (`report.html`).
+
+### ⚠️ ALERTA — `app/main.py` quedó roto en el merge de `testing` (665c9c3)
+
+El merge de Sprint 3 dejó `app/main.py` sin 3 imports (`logging`, `RequestValidationError`,
+`StarletteHTTPException`). Efecto: **la app no importaba** y **9 módulos de test no colectaban**
+(la suite entera no corría, no era "151/151 verde").
+
+- **P5 agregó solo los 3 imports** (cambio mínimo para desbloquear; sin tocar lógica de nadie).
+- **Queda pendiente para P1/P2/P4** — no es de P5 y no se tocó:
+  1. `app/main.py` tiene **handlers duplicados**: `HTTPException`/`Exception` registrados dos veces
+     (versión de P1 en líneas ~25-48 y versión con envelope en ~81-108). Gana el último registrado,
+     pero conviene borrar el duplicado.
+  2. `ObservabilityMiddleware` **se importa pero nunca se registra** (`app.add_middleware` no existe)
+     → la observabilidad de P4 no está activa. Esto rompe `tests/test_observability.py`.
+  3. **13 tests en rojo** tras desbloquear la colección: `test_error_handler`, `test_jobs`,
+     `test_observability`, `test_sellers_api`, `test_verification_async`, `test_verifications`.
+     Todos en carpetas de P1/P2/P3/P4. Los 144 restantes pasan.
 
 ### Observaciones del review
 

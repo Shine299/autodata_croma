@@ -95,14 +95,26 @@ async def perform_seller_screening(
     """Orchestrates seller screening across SUNAT and SAT Lima."""
     doc_number = request.document_number.strip()
     doc_type = request.document_type.strip().upper()
-    body = {
-        "document_type": doc_type,
-        "document_number": doc_number,
-    }
+    is_ruc = doc_type == "RUC"
 
-    # Concurrent fetch from SUNAT and SAT Seller
-    sunat_task = client.call("sunat", "/api/v1/croma/sunat", body, cache_key=doc_number)
-    sat_task = client.call("sat_seller", "/api/v1/croma/sat-seller", body, cache_key=doc_number)
+    # Endpoints reales de Croma (ver https://api.croma.run/catalog):
+    #   SUNAT por RUC:      POST /pe/sunat/ruc/v1        body {"ruc": ...}
+    #   SUNAT por documento: POST /pe/sunat/document/v1  body {"document_type":"dni","document_number":...}
+    #   SAT Lima deuda:      POST /pe/sat-lima/account-status/v1  body {"document_type":"dni"|"ruc","document_number":...}
+    if is_ruc:
+        sunat_path = "/pe/sunat/ruc/v1"
+        sunat_body = {"ruc": doc_number}
+        sat_body = {"document_type": "ruc", "document_number": doc_number}
+    else:
+        sunat_path = "/pe/sunat/document/v1"
+        sunat_body = {"document_type": doc_type.lower(), "document_number": doc_number}
+        sat_body = {"document_type": doc_type.lower(), "document_number": doc_number}
+
+    # Concurrent fetch from SUNAT and SAT Lima (deuda por documento)
+    sunat_task = client.call("sunat", sunat_path, sunat_body, cache_key=doc_number)
+    sat_task = client.call(
+        "sat_seller", "/pe/sat-lima/account-status/v1", sat_body, cache_key=doc_number
+    )
 
     sunat_res, sat_res = await asyncio.gather(sunat_task, sat_task, return_exceptions=False)
 
